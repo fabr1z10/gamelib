@@ -14,4 +14,13 @@ public:
 				createRoom,            // Method name in Python
 		);
 	}
+
+	void init(std::shared_ptr<Room> room) override {
+		PYBIND11_OVERRIDE_PURE(
+				void,                  // Return type
+				IRoomFactory,          // Parent class
+				init,                  // Method name in Python
+				room                   // Argument(s)
+		);
+	}
 };

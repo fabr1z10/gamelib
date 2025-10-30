@@ -96,3 +96,7 @@ bool IShader::isIntegerType(GLenum type) {
 		   type == GL_SHORT || type == GL_UNSIGNED_SHORT ||
 		   type == GL_INT || type == GL_UNSIGNED_INT;
 }
+
+void IShader:: setInt(const std::string &name, int value) const {
+	glUniform1i(glGetUniformLocation(_programId, name.c_str()), value);
+}

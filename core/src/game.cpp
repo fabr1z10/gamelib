@@ -12,6 +12,7 @@ Game::Game() : _window(nullptr), _roomFactory(nullptr) {
 
 void Game::init(const std::string &homeDir) {
 	try {
+		_homeDir = homeDir;
 		_config = std::make_unique<Config>(homeDir + "/config.yaml");
 		initGL();
 	} catch (const std::exception &e) {
@@ -104,6 +105,8 @@ void Game::run() {
 	while (!shutdown) {
 		if (!_roomFactory) throw std::runtime_error("No room factory set!");
 		_room = _roomFactory->createRoom();
+		_roomFactory->init(_room);
+		_room->initialize();
 		bool endRoom = false;
 		// main loop
 		do {
@@ -140,4 +143,12 @@ IShader* Game::getShader(const std::string &id) {
 
 void Game::setRoomFactory(std::shared_ptr<IRoomFactory> factory) {
 	_roomFactory = factory;
+}
+
+Room *Game::getCurrentRoom() {
+	return _room.get();
+}
+
+void Game::setCurrentRoom(std::shared_ptr<Room> room) {
+	_room = room;
 }

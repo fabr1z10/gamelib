@@ -23,6 +23,10 @@ public:
 	GLFWwindow* getWindow() const;
 	IShader* getShader(const std::string& id);
 	void setRoomFactory(std::shared_ptr<IRoomFactory> factory);
+	Room* getCurrentRoom();
+	void setCurrentRoom(std::shared_ptr<Room>);
+	std::string getHomeDir() const;
+	glm::vec4 getWindowViewport() const;
 private:
 	static void WindowResizeCallback(GLFWwindow* win, int width, int height);
 	void initGL();
@@ -36,7 +40,12 @@ private:
 	ShaderRegistry _shaderRegistry;
 	std::shared_ptr<IRoomFactory> _roomFactory;
 	std::shared_ptr<Room> _room;
+	std::string _homeDir;
 };
+
+inline glm::vec4 Game::getWindowViewport() const {
+	return _windowViewport;
+}
 
 inline const Config* Game::getConfig() const {
 	return _config.get();
@@ -44,5 +53,9 @@ inline const Config* Game::getConfig() const {
 
 inline GLFWwindow *Game::getWindow() const {
 	return _window;
+}
+
+inline std::string Game::getHomeDir() const {
+	return _homeDir;
 }
 

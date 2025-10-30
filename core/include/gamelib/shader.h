@@ -8,7 +8,10 @@
 #include <GL/glew.h>
 #include "glm/glm.hpp"
 #include "unordered_map"
-#include <gamelib/batch.h>
+#include "gamelib/camera.h"
+
+
+class IBatch;
 
 struct VertexInfo {
 	int size;
@@ -23,7 +26,7 @@ public:
 
 	virtual ~IShader();
 
-	virtual std::shared_ptr<IBatch> createBatch() = 0;
+	virtual std::shared_ptr<IBatch> createBatch(Camera*, int) { return nullptr; }
 
 	virtual void use();
 
@@ -31,8 +34,9 @@ public:
 
 	void setupVertices();
 
-	[[nodiscard]] GLuint getProgId() const;
+	GLuint getProgramId() const;
 
+	void setInt(const std::string &name, int value) const;
 protected:
 	std::vector<VertexInfo> _vertexFormat;
 	GLuint _programId;
@@ -41,23 +45,9 @@ private:
 	bool isIntegerType(GLenum type);
 };
 
-
-template<typename VERTEX, typename PRIMITIVE>
-class Shader : public IShader {
-public:
-	Shader(const std::string_view & vertexCode, const std::string_view& fragmentCode) :
-			IShader(vertexCode, fragmentCode, VERTEX::vertexFormat) {}
-
-	std::shared_ptr<IBatch> createBatch() override {
-		return std::make_shared<Batch<VERTEX, PRIMITIVE>>(this,1000);
-	}
-
-
-};
-
-
-
-inline GLuint IShader::getProgId() const {
+inline GLuint IShader::getProgramId() const {
 	return _programId;
 }
+
+
 

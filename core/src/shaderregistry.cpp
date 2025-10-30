@@ -2,11 +2,17 @@
 #include "gamelib/shaders/basic_shaders.h"
 #include <stdexcept>
 #include "gamelib/primitives.h"
+#include "gamelib/batch_shader.h"
 
 ShaderRegistry::ShaderRegistry() {
 	_shaderBuilders["sprite"] = [this] () {
 		return std::make_shared<Shader<VertexTexture, QuadPrimitive>>(
 				gamelib::shaders::sprite_vertex, gamelib::shaders::sprite_fragment);
+	};
+
+	_shaderBuilders["sprite_pal"] = [this] () {
+		return std::make_shared<Shader<VertexTexturePalette, QuadPrimitive>>(
+				gamelib::shaders::sprite_vertex_palette, gamelib::shaders::sprite_fragment_palette);
 	};
 
 }

@@ -20,6 +20,30 @@ struct VertexTexture {
 	}
 };
 
+struct VertexTexturePalette {
+	glm::vec3 position;
+	glm::vec2 texCoord;
+	int paletteId;
+
+	static std::string vertexFormat;
+
+	static void setupVertices() {
+
+		auto stride = sizeof(VertexTexturePalette);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTexturePalette, texCoord));
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribIPointer(2, 1, GL_INT, stride, (const void *) offsetof(VertexTexturePalette, paletteId));
+
+
+	}
+};
+
 
 struct LinePrimitive {
 	static constexpr GLenum glPrimitive = GL_LINES;

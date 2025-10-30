@@ -2,20 +2,40 @@
 
 #include <GL/glew.h>
 #include <vector>
+#include <list>
+#include <memory>
+#include "gamelib/camera.h"
 
 class IShader;
+class SpriteSheet;
+class IModel;
 
 class IBatch {
 public:
-	IBatch(IShader* shader);
+	IBatch(IShader* shader, Camera* camera);
 
 	virtual ~IBatch() = default;
+
+	virtual void setupUniforms() = 0;
 
 	virtual void configure() = 0;
 
 	virtual void draw() = 0;
 
 	virtual void startShader();
+
+	int getPrimitiveId();
+
+	void releasePrimitiveId(int);
+
+	virtual const std::type_info& vertexType() const = 0;
+
+	void addSpriteSheet(std::shared_ptr<SpriteSheet> texture);
+
+	const SpriteSheet* getSpriteSheet() const;
+
+	std::shared_ptr<IModel> getModel(const std::string& id);
+
 protected:
 	GLuint _vao;
 	GLuint _vbo;
@@ -23,62 +43,13 @@ protected:
 	// primitive type used for rendering
 	GLenum _prim;
 	IShader* _shader;
+	Camera* _cam;
+	int _nPrimitive;					// next element to be allocated
+	std::list<int> _deallocated;		// list of element id to recycle
+	std::shared_ptr<SpriteSheet> _spriteSheet;
 };
 
-template<typename VERTEX, typename PRIMITIVE>
-class Batch : public IBatch {
-public:
-	Batch(IShader* shader, size_t maxPrimitives) : IBatch(shader), _maxPrimitives(maxPrimitives), _nPrimitive(0) {
-		_vertices.reserve(PRIMITIVE::verticesPerPrimitive * maxPrimitives);
-		_indices.reserve(PRIMITIVE::indicesPerPrimitive * maxPrimitives);
-		_prim = PRIMITIVE::glPrimitive;
-	}
+inline const SpriteSheet *IBatch::getSpriteSheet() const {
+	return _spriteSheet.get();
+}
 
-	void configure() override {
-		glGenVertexArrays(1, &_vao);
-		glBindVertexArray(_vao);
-
-		glGenBuffers(1, &_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(VERTEX) * _vertices.size(), &_vertices[0], GL_DYNAMIC_DRAW);
-
-		VERTEX::setupVertices();
-
-		initIndices();
-
-		glGenBuffers(1, &_ebo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * _indices.size(), &_indices[0], GL_STATIC_DRAW);
-	}
-
-	virtual void initIndices() {
-		_indices.resize(_maxPrimitives * PRIMITIVE::indicesPerPrimitive);
-		int base = 0;
-		int j = 0;
-		for (int i = 0; i < _maxPrimitives; ++i) {
-			for (int k = 0 ; k < PRIMITIVE::indicesPerPrimitive; ++k) {
-				_indices[j++] = base + PRIMITIVE::indexPattern[k];
-			}
-			base += PRIMITIVE::verticesPerPrimitive;
-		}
-	}
-
-	void draw() override {
-		startShader();
-
-		glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(VERTEX) * _nPrimitive * PRIMITIVE::verticesPerPrimitive, &_vertices[0]);
-
-		//initDraw(s);
-		glBindVertexArray(_vao);
-		glDrawElements(_prim, PRIMITIVE::indicesPerPrimitive * _nPrimitive, GL_UNSIGNED_INT, (GLvoid*)0);
-		glBindVertexArray(0);
-	}
-private:
-
-	std::vector<VERTEX> _vertices;
-	std::vector<unsigned> _indices;
-	size_t _maxPrimitives;
-	int _nPrimitive;		// holds the # of primitives stored!
-
-};

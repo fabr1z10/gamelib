@@ -2,6 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 #include <glm/glm.hpp>
+#include "gamelib/util.h"
 
 namespace YAML {
 
@@ -45,4 +46,29 @@ namespace YAML {
 		}
 	};
 
+	template<>
+	struct convert<QuadInfo> {
+		static bool decode(const Node& node, QuadInfo& q) {
+			// node must be a sequence
+			if (!node.IsSequence()) return false;
+			if (node.size() < 4) return false; // x,y,w,h mandatory
+
+			q.x = node[0].as<int>();
+			q.y = node[1].as<int>();
+			q.width = node[2].as<int>();
+			q.height = node[3].as<int>();
+			q.anchorX = node[4].as<int>();
+			q.anchorY = node[5].as<int>();
+
+			// Optional 5th item: dictionary
+			if (node.size() >= 7 && node[6].IsMap()) {
+				const Node& opt = node[6];
+				if (opt["pal"])    q.palette    = opt["pal"].as<int>();
+				if (opt["flipx"])  q.flipx  = opt["flipx"].as<bool>();
+				if (opt["flipy"])  q.flipy  = opt["flipy"].as<bool>();
+			}
+
+			return true;
+		}
+	};
 } // namespace YAML
