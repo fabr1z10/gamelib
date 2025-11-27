@@ -1,6 +1,50 @@
+#pragma once
+
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <string>
+
+struct VertexColor {
+	glm::vec3 position;
+	glm::vec4 color;
+
+	static std::string vertexFormat;
+
+	static void setupVertices() {
+
+		auto stride = sizeof(VertexColor);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexColor, color));
+	}
+};
+
+struct VertexColorNormal {
+	glm::vec3 position;
+	glm::vec4 color;
+	glm::vec3 normal;
+
+	static std::string vertexFormat;
+
+	static void setupVertices() {
+
+		auto stride = sizeof(VertexColorNormal);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexColorNormal, color));
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexColorNormal, normal));
+	}
+};
+
 
 struct VertexTexture {
 	glm::vec3 position;
@@ -44,6 +88,29 @@ struct VertexTexturePalette {
 	}
 };
 
+
+struct VertexSkeletal {
+public:
+	glm::vec3 position;
+	glm::vec2 texture;
+	glm::vec3 weights;
+	static std::string vertexFormat;
+	static void setupVertices() {
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSkeletal), (void*)0);
+
+		// Define texture coordinate attribute (2 floats per vertex)
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexSkeletal), (void*)(3 * sizeof(float)));
+
+		// Define weights attribute (3 floats per vertex)
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSkeletal), (void*)(5 * sizeof(float)));
+
+
+	}
+};
 
 struct LinePrimitive {
 	static constexpr GLenum glPrimitive = GL_LINES;

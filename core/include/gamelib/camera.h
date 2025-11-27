@@ -24,6 +24,7 @@ public:
 
 	glm::vec3 getPosition() const;
 
+	glm::mat4 getViewProjectionMatrix() const;
 protected:
 
 	glm::vec3 _fwd;

@@ -2,12 +2,13 @@
 
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <memory>
 #include "gamelib/batch.h"
 
 class Node;
-
+class ICollisionEngine;
 
 class Room : public std::enable_shared_from_this<Room>{
 public:
@@ -21,6 +22,7 @@ public:
 
 	void draw();
 
+	void cleanup();
 	bool isComplete() const;
 
 	/*
@@ -34,7 +36,13 @@ public:
 
 	void addBatch(const std::string& key, std::shared_ptr<IBatch> batch);
 
+	void addShader(IShader* shader);
+
 	void addCamera(const std::string& key, std::shared_ptr<Camera> camera);
+
+	ICollisionEngine* getCollisionEngine() const;
+
+	void addCollisionEngine(std::shared_ptr<ICollisionEngine>);
 private:
 	glm::vec3 _clearColor;
 	bool _complete = false;
@@ -43,7 +51,9 @@ private:
 	std::shared_ptr<Node> _rootNode;
 	std::shared_ptr<IShader> _blitShader;
 	unsigned int _quadVAO, _quadVBO;
+	std::unordered_set<IShader*> _shadersForStaticRendering;
 	GLuint _fb, _color, _depth;
+	std::shared_ptr<ICollisionEngine> _collisionEngine;
 };
 
 inline bool Room::isComplete() const {
@@ -52,5 +62,9 @@ inline bool Room::isComplete() const {
 
 inline std::shared_ptr<Node> Room::getRootNode() {
 	return _rootNode;
+}
+
+inline ICollisionEngine *Room::getCollisionEngine() const {
+	return _collisionEngine.get();
 }
 

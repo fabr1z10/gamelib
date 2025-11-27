@@ -16,7 +16,7 @@ public:
 
 	virtual ~IBatch() = default;
 
-	virtual void setupUniforms() = 0;
+	//virtual void setupUniforms() = 0;
 
 	virtual void configure() = 0;
 
@@ -34,8 +34,13 @@ public:
 
 	const SpriteSheet* getSpriteSheet() const;
 
-	std::shared_ptr<IModel> getModel(const std::string& id);
+	virtual std::shared_ptr<IModel> getModel(const std::string& id);
 
+	bool isDynamic() const;
+
+	Camera* getCamera() const;
+
+	IShader* getShader() const;
 protected:
 	GLuint _vao;
 	GLuint _vbo;
@@ -47,9 +52,17 @@ protected:
 	int _nPrimitive;					// next element to be allocated
 	std::list<int> _deallocated;		// list of element id to recycle
 	std::shared_ptr<SpriteSheet> _spriteSheet;
+	bool _dynamic;
 };
 
 inline const SpriteSheet *IBatch::getSpriteSheet() const {
 	return _spriteSheet.get();
 }
 
+inline Camera *IBatch::getCamera() const {
+	return _cam;
+}
+
+inline IShader *IBatch::getShader() const {
+	return _shader;
+}

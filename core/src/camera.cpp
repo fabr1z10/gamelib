@@ -61,3 +61,7 @@ PerspectiveCamera::PerspectiveCamera(glm::vec4 viewport, float fov, float near, 
 	Camera(viewport), _fov(fov), _near(near), _far(far) {
 	_projectionMatrix = glm::perspective (glm::radians(_fov), (float)_viewport[2]/_viewport[3], _near, _far);
 }
+
+glm::mat4 Camera::getViewProjectionMatrix() const {
+	return _projectionMatrix * _viewMatrix;
+}

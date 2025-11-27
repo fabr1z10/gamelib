@@ -8,6 +8,14 @@ glm::vec3 IModel::getWorldPosition() const {
 		return glm::vec3(0);
 	}
 }
+
+Transform IModel::getWorldTransform() const {
+	if (_owner) {
+		return _owner->getWorldTransform();
+	} else {
+		return Transform{};
+	}
+}
 //QuadModel::QuadModel(const std::string &batchId, int x, int y, int w, int h) :
 //	Model<VertexTexture, QuadPrimitive>(batchId), _size(w, h) {
 //	allocate(1);

@@ -1,5 +1,6 @@
 #include "gamelib/shaderregistry.h"
 #include "gamelib/shaders/basic_shaders.h"
+#include "gamelib/shaders/skeletal_shader.h"
 #include <stdexcept>
 #include "gamelib/primitives.h"
 #include "gamelib/batch_shader.h"
@@ -15,6 +16,20 @@ ShaderRegistry::ShaderRegistry() {
 				gamelib::shaders::sprite_vertex_palette, gamelib::shaders::sprite_fragment_palette);
 	};
 
+	_shaderBuilders["triangle_color"] = [this] () {
+		return std::make_shared<Shader<VertexColorNormal, TrianglePrimitive>>(
+				gamelib::shaders::color_normal_vertex, gamelib::shaders::color_normal_fragment);
+	};
+
+	_shaderBuilders["line_color"] = [this] () {
+		return std::make_shared<Shader<VertexColor, LinePrimitive>>(
+				gamelib::shaders::color_vertex, gamelib::shaders::color_fragment);
+	};
+
+	_shaderBuilders["skeletal"] = [this] () {
+		return std::make_shared<Shader<VertexSkeletal, TrianglePrimitive>>(
+				gamelib::shaders::skeletal_vertex, gamelib::shaders::skeletal_fragment);
+	};
 }
 
 IShader* ShaderRegistry::getShader(const std::string & id) {

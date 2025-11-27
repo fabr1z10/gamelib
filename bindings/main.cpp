@@ -1,16 +1,182 @@
-#include <pybind11/pybind11.h>
+#include "helper.h"
 #include <gamelib/game.h>
 #include <gamelib/shader.h>
-
+#include "gamelib/transform.h"
 #include "pyroomfactory.h"
 #include "gamelib/tex.h"
 #include "gamelib/spritesheet.h"
 #include "gamelib/model.h"
 #include "gamelib/node.h"
+#include "gamelib/static_batch.h"
+#include "gamelib/static_model.h"
+#include "gamelib/shape.h"
+#include "gamelib/shapes/line.h"
+#include "gamelib/shapes/polyline.h"
+#include "gamelib/shapes/rect.h"
+#include "gamelib/playercontroller2d.h"
+#include "gamelib/collisionengine.h"
 
 namespace py = pybind11;
 
+
+
+void exportVec(py::module_& m) {
+
+	py::class_<glm::ivec2>(m, "IVec2")
+		.def(py::init<>())
+		.def(py::init<int, int>())
+		.def_readwrite("x", &glm::ivec2::x)
+		.def_readwrite("y", &glm::ivec2::y);
+
+	py::class_<glm::vec2>(m, "Vec2")
+	 	.def(py::init<>())
+		.def(py::init<float, float>())
+		.def_readwrite("x", &glm::vec2::x)
+		.def_readwrite("y", &glm::vec2::y)
+		.def("__pos__", [] (const glm::vec2& v) { return v; })
+		.def("__neg__", [] (const glm::vec2& v) { return -v; })
+		.def("__add__", [](const glm::vec2 &a, const glm::vec2 &b){
+			return a + b;
+		})
+		.def("__sub__", [](const glm::vec2 &a, const glm::vec2 &b){
+			return a - b;
+		})
+		.def("__mul__", [](const glm::vec2& v, float s) {
+			return v * s;
+		})
+		.def("__rmul__", [](const glm::vec2& v, float s) {
+			return v * s;         // just reverse: s * v → v * s
+		})
+		.def("__repr__", [](const glm::vec2 &v) {
+			return "Vec2(" + std::to_string(v.x) +
+					   ", " + std::to_string(v.y) + ")";
+			})
+		// --- length ---
+		.def("length", [](const glm::vec2 &a){
+			return glm::length(a);
+		})
+		// --- normalize ---
+		.def("normalize", [](const glm::vec2 &a){
+			return glm::normalize(a);
+		});
+
+	py::class_<glm::vec3>(m, "Vec3")
+			.def(py::init<>())
+			.def(py::init<float, float, float>())
+			.def_readwrite("x", &glm::vec3::x)
+			.def_readwrite("y", &glm::vec3::y)
+			.def_readwrite("z", &glm::vec3::z)
+			.def("__pos__", [] (const glm::vec3& v) { return v; })
+			.def("__neg__", [] (const glm::vec3& v) { return -v; })
+			.def("__add__", [](const glm::vec3 &a, const glm::vec3 &b){
+				return a + b;
+			})
+			.def("__sub__", [](const glm::vec3 &a, const glm::vec3 &b){
+				return a - b;
+			})
+			.def("__repr__", [](const glm::vec3 &v) {
+				return "Vec3(" + std::to_string(v.x) +
+					   ", " + std::to_string(v.y) +
+					   ", " + std::to_string(v.z) + ")";
+			})
+			// --- cross product ---
+			.def("cross", [](const glm::vec3 &a, const glm::vec3 &b){
+				return glm::cross(a, b);
+			})
+			// --- length ---
+			.def("length", [](const glm::vec3 &a){
+				return glm::length(a);
+			})
+			// --- normalize ---
+			.def("normalize", [](const glm::vec3 &a){
+				return glm::normalize(a);
+			});
+
+	py::class_<glm::vec4>(m, "Vec4")
+			.def(py::init<>())
+			.def(py::init<float, float, float, float>())
+			.def_readwrite("r", &glm::vec4::r)
+			.def_readwrite("g", &glm::vec4::g)
+			.def_readwrite("b", &glm::vec4::b)
+			.def_readwrite("a", &glm::vec4::a)
+			.def("__repr__", [](const glm::vec4 &v) {
+				return "Vec4(" + std::to_string(v.x) +
+					   ", " + std::to_string(v.y) +
+					   ", " + std::to_string(v.z) +
+					   ", " + std::to_string(v.w) + ")";
+			});
+
+}
+
+void exportVertices(py::module_& m) {
+	py::class_<VertexColor>(m, "VertexColor")
+		.def(py::init<>())
+		.def(py::init<glm::vec3, glm::vec4>())
+		.def_readwrite("position", &VertexColor::position)
+		.def_readwrite("color", &VertexColor::color);
+
+	py::class_<VertexColorNormal>(m, "VertexColorNormal")
+		.def(py::init<>())
+		.def(py::init<glm::vec3, glm::vec4, glm::vec3>())
+		.def_readwrite("position", &VertexColorNormal::position)
+		.def_readwrite("color", &VertexColorNormal::color);
+}
+
 PYBIND11_MODULE(gamelib, mainModule) {
+
+	py::module_ modSkeletal = mainModule.def_submodule("skeletal", "Skeletal submodule");
+	py::module_ modShapes = mainModule.def_submodule("shapes");
+
+	py::class_<Shape, std::shared_ptr<Shape>>(mainModule, "Shape")
+		.def("toModel", &Shape::makeModel);
+
+	mainModule.def("newGame", []() {
+		auto gameDirectory = detectGameDirectory();
+		auto& g = Game::instance();
+		g.init(gameDirectory);
+		return &g;
+	});
+
+	exportVec(mainModule);
+
+	exportVertices(mainModule);
+
+	py::class_<Matrix>(mainModule, "Matrix")
+		.def(py::init<>())
+		// 2. Constructor from 16 numbers (list or tuple)
+		.def(py::init([](py::object obj) {
+			glm::mat4 m(1.0f);
+			// Accept 16-element flat list/tuple
+			if (py::isinstance<py::sequence>(obj)) {
+				py::sequence seq = obj.cast<py::sequence>();
+				if (seq.size() == 16) {
+					for (int i = 0; i < 16; i++) {
+						m[i / 4][i % 4] = seq[i].cast<float>();
+					}
+					return Matrix(m);
+				}
+
+			}
+			throw std::runtime_error("Transform requires 16 numbers or a 4×4 list");
+		}))
+		.def("translate", &Matrix::translate, py::arg("t"))
+		.def("rotate", &Matrix::rotate, py::arg("angle"), py::arg("axis"))
+		.def("scale", &Matrix::scale, py::arg("s"))
+		.def("rr", [] (const Matrix& t) {
+			glm::mat4 inv = glm::transpose(glm::inverse(glm::mat3(t._matrix)));
+			Matrix result(inv);
+			return result;
+		})
+		.def("__mul__", [](const Matrix& t, const glm::vec3& v){ return t * v; })
+		.def("__mul__", [](const Matrix& t, const glm::vec4& v){ return t * v; })
+		// multiply two transforms
+		.def("__mul__", [](const Matrix &a, const Matrix &b) {
+			Matrix result;
+			result._matrix = a._matrix * b._matrix; // glm::mat4 multiplication
+			return result;
+		});
+
+
 	py::class_<Game>(mainModule, "Game", py::dynamic_attr())
 			.def_static("instance", &Game::instance, py::return_value_policy::reference)
 			.def("getShader", &Game::getShader, py::arg("id"), py::return_value_policy::reference)
@@ -22,7 +188,20 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def("getModel", &IBatch::getModel)
 		.def("addSpriteSheet", &IBatch::addSpriteSheet, py::arg("spritesheet"));
 
-	py::class_<IModel, std::shared_ptr<IModel>>(mainModule, "IModel");
+	bindStaticBatch<VertexColorNormal, TrianglePrimitive>(mainModule, "StaticBatchColor");
+	bindStaticBatch<VertexColor, LinePrimitive>(mainModule, "StaticBatchLineColor");
+
+	py::class_<IModel, std::shared_ptr<IModel>>(mainModule, "IModel")
+		.def_property("animation", &IModel::getAnimation,
+			&IModel::setAnimation);
+
+	py::class_<StaticModel<VertexColorNormal, TrianglePrimitive>,
+	        IModel, std::shared_ptr<StaticModel<VertexColorNormal, TrianglePrimitive>>>(mainModule, "TriangleColorModel")
+		.def(py::init<IBatch*>(), py::arg("batch"));
+
+	py::class_<StaticModel<VertexColor, LinePrimitive>,
+			IModel, std::shared_ptr<StaticModel<VertexColor, LinePrimitive>>>(mainModule, "LineColorModel")
+			.def(py::init<IBatch*>(), py::arg("batch"));
 
 	py::class_<IShader>(mainModule, "Shader", py::dynamic_attr())
 			.def("getBatch", &IShader::createBatch);
@@ -37,19 +216,21 @@ PYBIND11_MODULE(gamelib, mainModule) {
 			.def("getBatch", &Room::getBatch, py::return_value_policy::reference)
 			.def("addBatch", &Room::addBatch, py::arg("key"), py::arg("batch"))
 			.def("addCamera", &Room::addCamera, py::arg("key"), py::arg("camera"))
+			.def("setCollisionEngine", &Room::addCollisionEngine, py::arg("engine"))
 			.def("setClearColor", [](Room &self, int r, int g, int b) {
 				self.setClearColor(glm::ivec3{r, g, b});
 			}, py::arg("r"), py::arg("g"), py::arg("b"));
 
 	py::class_<Camera, std::shared_ptr<Camera>>(mainModule, "Camera")
-			.def("setPosition", [](Camera &self, py::tuple eye, py::tuple direction = py::make_tuple(0.f, 0.f, -1.f),
-								   py::tuple up = py::make_tuple(0.f, 1.f, 0.f)) {
-				self.setPosition(
-						glm::vec3(eye[0].cast<float>(), eye[1].cast<float>(), eye[2].cast<float>()),
-						glm::vec3(direction[0].cast<float>(), direction[1].cast<float>(), direction[2].cast<float>()),
-						glm::vec3(up[0].cast<float>(), up[1].cast<float>(), up[2].cast<float>())
-				);
-			})
+			.def("setPosition",
+				 [](Camera &self,
+					const glm::vec3& eye,
+					const glm::vec3& direction = glm::vec3(0.f, 0.f, -1.f),
+					const glm::vec3& up = glm::vec3(0.f, 1.f, 0.f)) {
+						self.setPosition(eye, direction, up);
+					},
+					py::arg("eye"), py::arg("direction") = glm::vec3(0.f, 0.f, -1.f),
+					py::arg("up") = glm::vec3(0.f, 1.f, 0.f))
 			.def("move", [](Camera &self, py::tuple delta) {
 				self.move(glm::vec3(delta[0].cast<float>(), delta[1].cast<float>(), delta[2].cast<float>()));
 			})
@@ -69,6 +250,12 @@ PYBIND11_MODULE(gamelib, mainModule) {
 			return py::make_tuple(self.getSize().x, self.getSize().y);
 		});
 
+	py::class_<PerspectiveCamera, Camera, std::shared_ptr<PerspectiveCamera>>(mainModule, "PerspectiveCamera")
+		.def(py::init([](float fov, float near, float far, py::tuple viewport) {
+			return std::make_shared<PerspectiveCamera>(glm::vec4(viewport[0].cast<float>(), viewport[1].cast<float>(),
+			        viewport[2].cast<float>(), viewport[3].cast<float>()), fov, near, far);
+		}), py::arg("fov") = 60.f, py::arg("near") = 0.1f, py::arg("far") = 100.f, py::arg("viewport") = py::make_tuple(0.f, 0.f, 0.f, 0.f));
+
 	py::class_<Tex, std::shared_ptr<Tex>>(mainModule, "Tex")
 		.def_static("getTexture", &Tex::getTexture, py::arg("filename"))
 		.def("size", [](Tex &self) {
@@ -87,12 +274,46 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		//.////def(py::init<IBatch*, int, int, int, int, int>(),
 		//	py::arg("batchId"), py::arg("x"), py::arg("y"), py::arg("w"), py::arg("h"), py::arg("pal"));
 
+	py::class_<Component, std::shared_ptr<Component>> component(mainModule, "Component");
+
 	py::class_<Node, std::shared_ptr<Node>>(mainModule, "Node")
 		.def(py::init<>())
 		.def("add", &Node::add, py::arg("child"))
+		.def("addComponent", &Node::addComponent, py::arg("component"))
+		.def("getModel", &Node::getModel, py::return_value_policy::reference)
 		.def("setModel", &Node::setModel, py::arg("model"))
-		.def("setPosition", [](Node &self, float x, float y, float z) {
-			self.setPosition(glm::vec3(x, y, z));
-		}, py::arg("x"), py::arg("y"), py::arg("z"));
+		.def("setPosition", &Node::setPosition)
+		.def("setScale", &Node::setScale, py::arg("scale"))
+		.def("setMatrix", &Node::setModelMatrix, py::arg("matrix"));
+
+
+	py::class_<Controller2D, Component, std::shared_ptr<Controller2D>>(mainModule, "Controller2D");
+
+	py::class_<Collider, Component, std::shared_ptr<Collider>>(mainModule, "Collider");
+
+	py::class_<BasicCollider, Collider, std::shared_ptr<BasicCollider>>(mainModule, "BasicCollider")
+		.def(py::init<std::shared_ptr<Shape>, int, int, const std::string&>(), py::arg("shape"), py::arg("flag"),
+			 py::arg("mask"), py::arg("tag"));
+
+	py::class_<PlayerController2D, Controller2D, std::shared_ptr<PlayerController2D>>(mainModule, "PlayerController2D")
+		.def(py::init<float, float, int, int, float, float, float, float, glm::vec2>(), py::arg("width"), py::arg("height"),
+			py::arg("maskUp"), py::arg("maskDown"), py::arg("maxSpeed"), py::arg("jumpHeight"), py::arg("timeToJumpApex"),
+			py::arg("accelerationTime"), py::arg("anchor") = glm::vec2(0.f, 0.f));
+
+	exportSkeletal(modSkeletal);
+
+	py::class_<shapes::Line, Shape, std::shared_ptr<shapes::Line>>(modShapes, "Line")
+		.def(py::init<glm::vec2, glm::vec2>(), py::arg("A"), py::arg("B"));
+
+	py::class_<shapes::PolyLine, Shape, std::shared_ptr<shapes::PolyLine>>(modShapes, "PolyLine")
+		.def(py::init<std::vector<glm::vec2>, bool>(), py::arg("points"), py::arg("closed"));
+
+	py::class_<shapes::Rect, Shape, std::shared_ptr<shapes::Rect>>(modShapes, "Rect")
+		.def(py::init<float, float, glm::vec2>(), py::arg("width"), py::arg("height"), py::arg("anchor") = glm::vec2(0.f, 0.f));
+
+	py::class_<ICollisionEngine, std::shared_ptr<ICollisionEngine>>(mainModule, "ICollisionEngine");
+
+	py::class_<SpatialHashingCollisionEngine, ICollisionEngine, std::shared_ptr<SpatialHashingCollisionEngine>>(mainModule, "CollisionEngine")
+		.def(py::init<float>(), py::arg("cellSize"));
 
 }

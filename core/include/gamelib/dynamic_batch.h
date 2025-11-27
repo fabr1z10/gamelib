@@ -13,6 +13,7 @@ public:
 		_vertices.resize(PRIMITIVE::verticesPerPrimitive * maxPrimitives);
 		_indices.reserve(PRIMITIVE::indicesPerPrimitive * maxPrimitives);
 		_prim = PRIMITIVE::glPrimitive;
+		_dynamic = true;
 	}
 
 	// returns the start address of the i-th primitive's vertex data
@@ -63,10 +64,10 @@ public:
 		glBindVertexArray(0);
 	}
 
-	void setupUniforms() override {
+	void setupUniforms() {
 		auto vp = _cam->getViewport();
 		glViewport(vp.x, vp.y, vp.z, vp.w);
-		int jointMatrixLoc = glGetUniformLocation(_shader->getProgramId(), "pv_mat");
+		int jointMatrixLoc = glGetUniformLocation(_shader->getProgramId(), "mvp_mat");
 		auto pvMatrix =  _cam->getProjectionMatrix() * _cam->getViewMatrix();
 		glUniformMatrix4fv(jointMatrixLoc, 1, GL_FALSE, glm::value_ptr(pvMatrix[0]));
 

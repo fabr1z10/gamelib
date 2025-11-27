@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include "gamelib/shaderregistry.h"
 #include "gamelib/roomfactory.h"
+#include "gamelib/keylistener.h"
 
 class Game {
 public:
@@ -27,8 +28,11 @@ public:
 	void setCurrentRoom(std::shared_ptr<Room>);
 	std::string getHomeDir() const;
 	glm::vec4 getWindowViewport() const;
+	void registerToKeyboardEvent(KeyListener*);
+	void unregisterToKeyboardEvent(KeyListener*);
 private:
 	static void WindowResizeCallback(GLFWwindow* win, int width, int height);
+	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void initGL();
 	void closeGL();
 	Game();
@@ -41,6 +45,8 @@ private:
 	std::shared_ptr<IRoomFactory> _roomFactory;
 	std::shared_ptr<Room> _room;
 	std::string _homeDir;
+	std::unordered_set<KeyListener*> _keyboardListeners;
+	//std::unordered_set<MouseListener*> m_mouseListeners;
 };
 
 inline glm::vec4 Game::getWindowViewport() const {

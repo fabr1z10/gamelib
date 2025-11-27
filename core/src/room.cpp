@@ -1,6 +1,7 @@
 #include "gamelib/room.h"
 #include <GL/glew.h>
 #include <stdexcept>
+#include "gamelib/game.h"
 #include "gamelib/node.h"
 #include "gamelib/batch_shader.h"
 #include "gamelib/shaders/basic_shaders.h"
@@ -78,9 +79,19 @@ void Room::draw() {
 	glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// 1st draw dynamic batches
 	for (const auto& b : _batches) {
-		b.second->draw();
+		if (b.second->isDynamic()) {
+			b.second->draw();
+		}
 	}
+
+	// now draw all static models
+	for (const auto& shader : _shadersForStaticRendering) {
+		shader->use();
+		_rootNode->draw(shader);
+	}
+
 
 	auto vp = Game::instance().getWindowViewport();
 	//std::vector<float> ccc(256*240);
@@ -100,8 +111,16 @@ void Room::draw() {
 
 }
 
+void Room::addShader(IShader* shader) {
+	_shadersForStaticRendering.insert(shader);
+}
 void Room::addBatch(const std::string &key, std::shared_ptr<IBatch> batch) {
 	_batches[key] = batch;
+	if (!batch->isDynamic()) {
+		// for static batches, we need to store the shader. Static models are rendered
+		// by looping through the scene graph i.e. we need one loop for each shader
+		_shadersForStaticRendering.insert(batch->getShader());
+	}
 }
 
 void Room::addCamera(const std::string &key, std::shared_ptr<Camera> cam) {
@@ -112,7 +131,9 @@ IBatch *Room::getBatch(const std::string & key) {
 	try {
 		return _batches.at(key).get();
 	} catch (const std::out_of_range&) {
-		throw std::runtime_error("Batch with key '" + key + "' not found");
+		std::cerr << ("Batch with key '" + key + "' not found");
+		return nullptr;
+
 	}
 }
 
@@ -126,4 +147,12 @@ Camera *Room::getCamera(const std::string &key) {
 
 void Room::update(double dt) {
 	_rootNode->update(dt);
+}
+
+void Room::addCollisionEngine(std::shared_ptr<ICollisionEngine> engine) {
+	_collisionEngine = engine;
+}
+
+void Room::cleanup() {
+	_rootNode = nullptr;
 }

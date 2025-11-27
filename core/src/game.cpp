@@ -51,6 +51,7 @@ void Game::initGL() {
 	}
 	glfwMakeContextCurrent(_window);
 	glfwSetFramebufferSizeCallback(_window, Game::WindowResizeCallback);
+	glfwSetKeyCallback(_window, key_callback);
 	const GLubyte* version = glGetString(GL_VERSION);
 	const GLubyte* renderer = glGetString(GL_RENDERER);
 	const GLubyte* vendor = glGetString(GL_VENDOR);
@@ -119,7 +120,7 @@ void Game::run() {
 				std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Yield CPU
 				currentTime = glfwGetTime();
 			}
-			double dt = currentTime - _timeLastUpdate;
+			double dt = _frameTime; //currentTime - _timeLastUpdate;
 			_timeLastUpdate = currentTime;
 
 			_room->update(dt);
@@ -133,6 +134,7 @@ void Game::run() {
 			endRoom = _room->isComplete();
 
 		} while (!endRoom && !shutdown);
+		_room->cleanup();
 	}
 
 }
@@ -151,4 +153,23 @@ Room *Game::getCurrentRoom() {
 
 void Game::setCurrentRoom(std::shared_ptr<Room> room) {
 	_room = room;
+}
+
+
+void Game::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	for (auto& s : Game::instance()._keyboardListeners) {
+		auto retval = s->keyCallback(window, key, scancode, action, mods);
+		if (retval == 1) {
+			break;
+		}
+	}
+}
+
+
+void Game::registerToKeyboardEvent(KeyListener* listener) {
+	_keyboardListeners.insert(listener);
+}
+
+void Game::unregisterToKeyboardEvent(KeyListener* listener) {
+	_keyboardListeners.erase(listener);
 }
