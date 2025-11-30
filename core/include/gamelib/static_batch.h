@@ -76,7 +76,7 @@ public:
 
 		int dirLight = glGetUniformLocation(_shader->getProgramId(), "lightDir");
 		if (dirLight != -1) {
-			glUniform3f(dirLight, 0.f, 0.f, -1.f);
+			glUniform3fv(dirLight, 1, glm::value_ptr(_lightDirection));
 		}
 
 
@@ -91,10 +91,13 @@ public:
 	const std::type_info& vertexType() const override {
 		return typeid(VERTEX);
 	}
-private:
+protected:
 
 	std::vector<VERTEX> _vertices;
 	std::vector<unsigned> _indices;
 	size_t _nPrimitives;
 
+
 };
+
+

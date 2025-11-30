@@ -15,6 +15,8 @@
 #include "gamelib/shapes/rect.h"
 #include "gamelib/playercontroller2d.h"
 #include "gamelib/collisionengine.h"
+#include "gamelib/follow.h"
+#include "gamelib/quadstaticbatch.h"
 
 namespace py = pybind11;
 
@@ -186,10 +188,20 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 	py::class_<IBatch, std::shared_ptr<IBatch>>(mainModule, "IBatch")
 		.def("getModel", &IBatch::getModel)
+		.def("setLightDirection", &IBatch::setLightDirection, py::arg("direction"))
 		.def("addSpriteSheet", &IBatch::addSpriteSheet, py::arg("spritesheet"));
 
 	bindStaticBatch<VertexColorNormal, TrianglePrimitive>(mainModule, "StaticBatchColor");
 	bindStaticBatch<VertexColor, LinePrimitive>(mainModule, "StaticBatchLineColor");
+	bindStaticBatch<VertexTextureNormal, QuadPrimitive>(mainModule, "StaticBatchTextNormalQuad");
+
+	py::class_<QuadStaticBatch, StaticBatch<VertexTextureNormal, QuadPrimitive>,
+	        std::shared_ptr<QuadStaticBatch>>(mainModule, "QuadStaticBatch")
+		.def(py::init<IShader*, Camera*>(), py::arg("shader"), py::arg("camera"))
+		.def("addQuad", &QuadStaticBatch::addQuad,
+		     py::arg("dir"), py::arg("position"), py::arg("size"),
+		     py::arg("texBounds"), py::arg("repeat"));
+
 
 	py::class_<IModel, std::shared_ptr<IModel>>(mainModule, "IModel")
 		.def_property("animation", &IModel::getAnimation,
@@ -299,6 +311,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def(py::init<float, float, int, int, float, float, float, float, glm::vec2>(), py::arg("width"), py::arg("height"),
 			py::arg("maskUp"), py::arg("maskDown"), py::arg("maxSpeed"), py::arg("jumpHeight"), py::arg("timeToJumpApex"),
 			py::arg("accelerationTime"), py::arg("anchor") = glm::vec2(0.f, 0.f));
+
+	py::class_<Follow, Component, std::shared_ptr<Follow>>(mainModule, "Follow")
+		.def(py::init<const std::string&, glm::vec3>(), py::arg("camId"), py::arg("relative_pos") = glm::vec3(0,0,5));
 
 	exportSkeletal(modSkeletal);
 

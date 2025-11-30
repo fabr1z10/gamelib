@@ -86,10 +86,11 @@ public:
 
 	void refresh() override {
 		size_t u = _points.size();
-		glm::vec3 pos = this->getWorldPosition();
+		auto t = this->getWorldTransform();
+
 		for (size_t i = 0; i < _points.size() - (_closed ? 0 : 1); ++i) {
-			auto p0 = pos + glm::vec3(_points[i], 0);
-			auto p1 = pos + glm::vec3(_points[(i + 1) % u], 0);
+			auto p0 = t.position + t.scale * glm::vec3(t.flipX * _points[i].x, _points[i].y, 0);
+			auto p1 = t.position + t.scale * glm::vec3(t.flipX * _points[(i + 1) % u].x, _points[(i+1)%u].y, 0);
 			VertexColor *v = this->_vertices[i];
 			v[0].position = p0;
 			v[0].color = _color;
@@ -188,6 +189,15 @@ public:
 		if (_ticks >= frame.ticks) {
 			_ticks = 0;
 			_frame = _spriteInfo.next(this->_animation,  _frame);
+			this->refresh();
+		}
+	}
+
+	void setAnimation(const std::string& anim) override {
+		if (anim != this->_animation) {
+			this->_animation = anim;
+			_frame = 0;
+			_ticks = 0;
 			this->refresh();
 		}
 	}

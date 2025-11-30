@@ -2,9 +2,19 @@
 #include "gamelib/shader.h"
 #include "gamelib/primitives.h"
 #include "gamelib/tex.h"
-#include <yaml-cpp/yaml.h>
 #include <filesystem>
 
+
+void Mesh::generateKeyPoints(const YAML::Node &info) {
+	if (info["keypoints"]) {
+		auto kpNode = info["keypoints"];
+		for (YAML::const_iterator it = kpNode.begin(); it != kpNode.end(); ++it) {
+			std::string name = it->first.as<std::string>();
+			auto point = it->second.as<glm::vec2>();
+			_keyPoints[name] = point;
+		}
+	}
+}
 Mesh::Mesh(const std::string& file, const std::string& id) {
 	namespace fs = std::filesystem;
 
@@ -18,6 +28,7 @@ Mesh::Mesh(const std::string& file, const std::string& id) {
 		auto tex = Tex::getTexture(p.parent_path() / texture);
 		_texId = tex->getId();
 		generateBuffers(points, indices);
+		generateKeyPoints(info);
 
 	} catch (const YAML::BadFile& e) {
 		throw std::runtime_error(std::string("Could not open config file: ") + e.what());

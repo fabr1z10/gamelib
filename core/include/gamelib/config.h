@@ -15,10 +15,13 @@ public:
 	std::string getTitle() const { return _title; }
 
 	float getDeviceAspectRatio() const;
+
+	int getDefaultTicks() const { return _defaultTicks; }
 private:
 	glm::ivec2 _deviceSize;
 	glm::ivec2 _windowSize;
 	std::string _title;
+	int _defaultTicks;
 	float _deviceAspectRatio;
 };
 

@@ -81,6 +81,7 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 			}
 		}
 		if (config["sprites"]) {
+			auto defaultTicks = Game::instance().getConfig()->getDefaultTicks();
 			for (auto s : config["sprites"]) {
 				SpriteInfo info;
 				auto id = s.first.as<std::string>();
@@ -91,7 +92,7 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 					for (auto f : a.second["frames"]) {
 						Frame frame;
 						frame.quad = readQuad(f["quad"]);
-						frame.ticks = YAML::read(f, "ticks", 10);
+						frame.ticks = YAML::read(f, "ticks", defaultTicks);
 						anim.frames.push_back(frame);
 					}
 					info.addAnimation(animId, anim);

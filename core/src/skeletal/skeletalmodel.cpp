@@ -227,6 +227,26 @@ void SkeletalModel::update() {
 	}
 
 	_bones = calculateCurrentPose(pose);
+
+	// compute offset
+	// apply offset
+	glm::vec3 offset(0.0f);
+//	for (const auto& m : m_offsetPointIds) {
+//		_
+//		//_bones[m.first] *
+//	}
+//	if (!m_offsetPointIds.empty()) {
+//
+//		//std::cout << "no of offset points: " << offsetPoints.size() << "\n";
+//		for (const auto &a : offsetPoints) {
+//			// find coordinates of offset pointg
+//			glm::vec4 p = m_bones[a.first] * glm::vec4(a.second, 1.0f);
+//			offset.y = std::max(-p.y, offset.y);
+//		}
+//		//std::cerr << offset.y << "\n";
+//		SetTransform(glm::translate(offset));
+//	}
+	_offset = glm::vec3(0.f, 100.f, 0.f);
 	//draw();
 	// apply offset
 //    const auto& offsetPoints = _skeletalModel->getOffsetPoints();
@@ -270,7 +290,7 @@ std::unordered_map<int, JointTransform> SkeletalModel::interpolatePoses(
 void SkeletalModel::draw(IShader* shader) {
 	auto vp = _cam->getViewport();
 	glViewport(vp.x, vp.y, vp.z, vp.w);
-	auto w = _owner->getWorldMatrix();
+	auto w = _owner->getWorldMatrix() * glm::translate(_offset);
 	auto pm = _cam->getProjectionMatrix();
 	auto vm = _cam->getViewMatrix();
 	glUniformMatrix4fv(_modelLocation, 1, false, &w[0][0]);

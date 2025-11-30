@@ -36,6 +36,50 @@ namespace gamelib::shaders {
 
 	)";
 
+	inline const std::string_view texture_normal_vertex = R"(
+	#version 330 core
+
+	layout (location = 0) in vec3 vPosition;
+	layout (location = 1) in vec4 vTexBounds;
+	layout (location = 2) in vec2 vTexCoords;
+	layout (location = 3) in vec3 vNormal;
+
+	uniform mat4 mvp_mat;
+	uniform mat3 model_mat;
+
+	out vec4 TexBounds;
+	out vec2 TexCoords;
+
+	void main() {
+
+    	gl_Position = mvp_mat * vec4(vPosition, 1);
+		Normal = model_mat * vNormal;
+    	TexBounds = vTexBounds;
+    	TexCoords = vTexCoords;
+	}
+	)";
+
+	inline const std::string_view texture_normal_fragment = R"(
+	#version 430 core
+
+	in vec4 TexBounds;
+	in vec2 TexCoords;
+
+	out vec4 FragColor;
+
+	uniform sampler2D tex_main;
+
+	void main()
+	{
+    	vec2 tc = TexBounds.xy + fract(TexCoords) * TexBounds.zw
+    	vec4 texColor = texture(tex_main, tc);
+    	if (texColor.a < 0.5) {
+        	discard;
+    	}
+	    FragColor=texColor;
+	}
+	)";
+
 	inline const std::string_view color_normal_vertex = R"(
 	#version 430 core
 

@@ -41,6 +41,8 @@ public:
 	Camera* getCamera() const;
 
 	IShader* getShader() const;
+
+	void setLightDirection(glm::vec3 direction);
 protected:
 	GLuint _vao;
 	GLuint _vbo;
@@ -53,6 +55,7 @@ protected:
 	std::list<int> _deallocated;		// list of element id to recycle
 	std::shared_ptr<SpriteSheet> _spriteSheet;
 	bool _dynamic;
+	glm::vec3 _lightDirection;
 };
 
 inline const SpriteSheet *IBatch::getSpriteSheet() const {

@@ -85,6 +85,7 @@ private:
     std::vector<glm::mat4> _invRestTransforms2;
     std::vector<glm::mat4> _restTransforms2;
 
+
     std::vector<std::pair<std::string, std::string>> m_offsetPointIds;
     std::vector<std::pair<int, glm::vec3>> m_offsetPoints;
 
@@ -119,6 +120,7 @@ private:
 	int _zLocation;
 	Camera* _cam;
 	std::string _camId;
+	glm::vec3 _offset;
 
 };
 

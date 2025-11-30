@@ -36,3 +36,7 @@ std::shared_ptr<IModel> IBatch::getModel(const std::string &id) {
 bool IBatch::isDynamic() const {
 	return _dynamic;
 }
+
+void IBatch::setLightDirection(glm::vec3 direction) {
+	_lightDirection = glm::normalize(direction);
+}

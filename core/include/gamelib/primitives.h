@@ -88,6 +88,29 @@ struct VertexTexturePalette {
 	}
 };
 
+struct VertexTextureNormal {
+	glm::vec3 position;
+	glm::vec4 texBounds;
+	glm::vec2 texCoords;
+	glm::vec3 normal;
+	static std::string vertexFormat;
+	static void setupVertices() {
+		auto stride = sizeof(VertexTextureNormal);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, texBounds));
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, texCoords));
+
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, normal));
+	}
+};
+
 
 struct VertexSkeletal {
 public:
