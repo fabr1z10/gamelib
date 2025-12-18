@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 #include <glm/glm.hpp>
 #include "gamelib/util.h"
+#include "gamelib/agi/agiroom.h"
 
 namespace YAML {
 
@@ -68,6 +69,18 @@ namespace YAML {
 				if (opt["flipy"])  q.flipy  = opt["flipy"].as<bool>();
 			}
 
+			return true;
+		}
+	};
+
+	template <>
+	struct convert<agi::ObjectInfo> {
+		static bool decode(const Node& node, agi::ObjectInfo& obj) {
+			if (!node.IsMap()) return false;
+			if (node["room"])      obj.room      = node["room"].as<std::string>();
+			if (node["model"])     obj.model     = node["model"].as<std::string>();
+			if (node["x"])         obj.x         = node["x"].as<int>();
+			if (node["y"])         obj.y         = node["y"].as<int>();
 			return true;
 		}
 	};

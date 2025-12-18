@@ -42,18 +42,19 @@ namespace gamelib::shaders {
 	layout (location = 0) in vec3 vPosition;
 	layout (location = 1) in vec4 vTexBounds;
 	layout (location = 2) in vec2 vTexCoords;
-	layout (location = 3) in vec3 vNormal;
+	//layout (location = 3) in vec3 vNormal;
 
 	uniform mat4 mvp_mat;
-	uniform mat3 model_mat;
+	//uniform mat3 model_mat;
 
 	out vec4 TexBounds;
 	out vec2 TexCoords;
+	//out vec3 Normal;
 
 	void main() {
 
     	gl_Position = mvp_mat * vec4(vPosition, 1);
-		Normal = model_mat * vNormal;
+		//Normal = model_mat * vNormal;
     	TexBounds = vTexBounds;
     	TexCoords = vTexCoords;
 	}
@@ -64,6 +65,7 @@ namespace gamelib::shaders {
 
 	in vec4 TexBounds;
 	in vec2 TexCoords;
+	//in vec3 Normal;
 
 	out vec4 FragColor;
 
@@ -71,7 +73,7 @@ namespace gamelib::shaders {
 
 	void main()
 	{
-    	vec2 tc = TexBounds.xy + fract(TexCoords) * TexBounds.zw
+    	vec2 tc = TexBounds.xy + fract(TexCoords) * TexBounds.zw;
     	vec4 texColor = texture(tex_main, tc);
     	if (texColor.a < 0.5) {
         	discard;

@@ -30,6 +30,7 @@ public:
 
 	virtual void use();
 
+
 	static std::unordered_map<char, std::pair<GLenum, size_t>> _types;
 
 	void setupVertices();

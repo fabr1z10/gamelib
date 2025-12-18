@@ -55,6 +55,12 @@ public:
 	Format getFormat() const {
 		return _format;
 	}
+
+	void keepCPUCopy(bool keep);
+
+	glm::ivec4 getColor(int x, int y);
+
+	uint8_t getIndex(int x, int y);
 private:
 
 	static std::unordered_map<std::string, std::shared_ptr<Tex>> _textureStore;
@@ -64,6 +70,10 @@ private:
 	GLuint _texId = 0;
 	GLuint _paletteId = 0;
 
+	// just for CPU storage! empty otherwise
+	bool _hasCPUCopy = false;
+	std::vector<uint8_t> _cpuIndices;
+	std::vector<uint8_t> _cpuRGBA;
 };
 
 inline GLuint Tex::getId() const {

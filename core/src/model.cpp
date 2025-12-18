@@ -16,6 +16,26 @@ Transform IModel::getWorldTransform() const {
 		return Transform{};
 	}
 }
+
+QuadModelRepeat::QuadModelRepeat(IBatch* b, const QuadInfo& info, glm::ivec4 texBounds)
+		: QuadModelBase(b, info), _texBounds(texBounds) {
+
+	auto spriteSheetSize = b->getSpriteSheet()->getSize();
+	auto ix = 1.f / spriteSheetSize.x;
+	auto iy = 1.f / spriteSheetSize.y;
+	_texBounds = glm::vec4(texBounds.x * ix, texBounds.y * iy, texBounds.z * ix, texBounds.w * iy);
+
+
+
+}
+
+void QuadModelRepeat::setVertex(VertexTextureRepeat* v, const glm::vec3& pos, const glm::vec2& uv)  {
+	v->position = pos;
+	v->texCoord = uv;
+	v->texBounds = _texBounds;
+}
+
+
 //QuadModel::QuadModel(const std::string &batchId, int x, int y, int w, int h) :
 //	Model<VertexTexture, QuadPrimitive>(batchId), _size(w, h) {
 //	allocate(1);

@@ -37,6 +37,8 @@ public:
 
 	void update(double dt);
 
+	virtual void customUpdate(double dt);
+
 	void remove();
 
 	void draw(IShader*);

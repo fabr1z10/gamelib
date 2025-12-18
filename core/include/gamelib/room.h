@@ -10,13 +10,13 @@
 class Node;
 class ICollisionEngine;
 
-class Room : public std::enable_shared_from_this<Room>{
+class Room {
 public:
 	Room();
 
 	void update(double) ;
 
-	void initialize();
+	virtual void initialize();
 
 	std::shared_ptr<Node> getRootNode();
 

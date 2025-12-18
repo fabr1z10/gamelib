@@ -119,6 +119,8 @@ void Node::update(double dt) {
 		c->update(dt);
 	}
 
+	customUpdate(dt);
+
 	// ... update model (if any) ...
 	if (_model) _model->update();
 
@@ -128,6 +130,8 @@ void Node::update(double dt) {
 	}
 
 }
+
+void Node::customUpdate(double dt) {}
 
 void Node::draw(IShader* shader) {
 	if (_model != nullptr) {

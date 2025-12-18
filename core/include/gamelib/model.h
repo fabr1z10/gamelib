@@ -35,13 +35,21 @@ public:
 	std::string getAnimation() { return _animation; }
 
 	void setOwner(Node*);
+
+	void setUpdate(bool);
 protected:
 	std::string _animation;
 	Node* _owner = nullptr;
+	bool _update = true;
 };
 
 inline void IModel::setOwner(Node * node) {
 	_owner = node;
+}
+
+
+inline void IModel::setUpdate(bool value) {
+	_update = value;
 }
 
 template<typename VERTEX, typename PRIMITIVE>
@@ -145,7 +153,7 @@ public:
 
 
 protected:
-	const QuadInfo& _quadInfo;
+	QuadInfo _quadInfo;
 	glm::vec2 _size;
 };
 
@@ -153,6 +161,16 @@ class QuadModel : public QuadModelBase<VertexTexture> {
 public:
 	QuadModel(IBatch* b, const QuadInfo& info)
 			: QuadModelBase(b, info) {}
+};
+
+class QuadModelRepeat : public QuadModelBase<VertexTextureRepeat> {
+public:
+	QuadModelRepeat(IBatch* b, const QuadInfo& info, glm::ivec4 texBounds);
+
+	// 2️⃣ Specialize setVertex *only for this vertex type*
+	void setVertex(VertexTextureRepeat* v, const glm::vec3& pos, const glm::vec2& uv) override;
+private:
+	glm::vec4 _texBounds;
 };
 
 class QuadModelPal : public QuadModelBase<VertexTexturePalette> {
@@ -184,6 +202,7 @@ public:
 	}
 
 	void update() override {
+		if (!this->_update) return;
 		const Frame& frame = _spriteInfo.getFrame(this->_animation, _frame);
 		_ticks++;
 		if (_ticks >= frame.ticks) {

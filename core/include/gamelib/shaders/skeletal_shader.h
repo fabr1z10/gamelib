@@ -33,8 +33,7 @@ namespace gamelib::shaders {
     	vec4 localPosition1 = Bone[weightIndex[1]] * modelpos;
     	vec4 localPosition2 = Bone[weightIndex[2]] * modelpos;
     	totalLocalPos += localPosition0 * vWeight[0] + localPosition1 * vWeight[1] + localPosition2 * vWeight[2];
-
-    	totalLocalPos.z = 0;//modelpos.z;
+		totalLocalPos.z -= 5.0;
     	pass_texCoord= vTexture;
 
     	gl_Position = projection * view * model * totalLocalPos;

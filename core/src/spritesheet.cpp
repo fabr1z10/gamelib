@@ -3,6 +3,8 @@
 #include "gamelib/game.h"
 #include "gamelib/shader.h"
 #include "gamelib/model.h"
+#include <filesystem>
+
 
 std::unordered_map<std::string, std::shared_ptr<SpriteSheet>> SpriteSheet::_sheets;
 
@@ -46,6 +48,12 @@ bool SpriteSheet::isIndexed() const {
 
 SpriteSheet::SpriteSheet(const std::string &filename) {
 	try {
+		std::filesystem::path p(filename);
+		if (p.extension() == ".png") {
+			_tex = std::make_shared<Tex>();
+			_tex->load(filename, nullptr);
+			return;
+		}
 
 
 		std::string fullName = Game::instance().getHomeDir() + "/" + filename;

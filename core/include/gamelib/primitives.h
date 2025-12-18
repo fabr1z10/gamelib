@@ -69,7 +69,9 @@ struct VertexTexturePalette {
 	glm::vec2 texCoord;
 	int paletteId;
 
-	static std::string vertexFormat;
+	//static std::string vertexFormat;
+	inline static std::string vertexFormat = "3f2f1i";
+
 
 	static void setupVertices() {
 
@@ -88,26 +90,24 @@ struct VertexTexturePalette {
 	}
 };
 
-struct VertexTextureNormal {
+struct VertexTextureRepeat {
 	glm::vec3 position;
 	glm::vec4 texBounds;
-	glm::vec2 texCoords;
-	glm::vec3 normal;
+	glm::vec2 texCoord;
+	//glm::vec3 normal;
 	static std::string vertexFormat;
 	static void setupVertices() {
-		auto stride = sizeof(VertexTextureNormal);
+		auto stride = sizeof(VertexTextureRepeat);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, texBounds));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureRepeat, texBounds));
 
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, texCoords));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureRepeat, texCoord));
 
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (const void *) offsetof(VertexTextureNormal, normal));
 	}
 };
 

@@ -23,7 +23,7 @@ void exportSkeletal(py::module_& module) {
 	py::class_<SkeletalModel, IModel, std::shared_ptr<SkeletalModel>>(module, "SkeletalModel")
 		.def(py::init<const std::string&>(), py::arg("camera_id"))
 		.def("addJoint", &SkeletalModel::addJoint,
-			 py::arg("name"), py::arg("parent"), py::arg("position"))
+			 py::arg("name"), py::arg("parent"), py::arg("position"), py::arg("scale") = 1.f, py::arg("z") = 0.f)
 		.def("setMesh", &SkeletalModel::setMesh,
 			 py::arg("joint_id"), py::arg("mesh"))
 		.def("setAnimation", &SkeletalModel::setAnimation,
@@ -37,7 +37,9 @@ void exportSkeletal(py::module_& module) {
 		.def("getJointId", &SkeletalModel::getJointId,
 			 py::arg("joint_name"))
 		.def("getAnimation", &SkeletalModel::getAnimation,
-			 py::arg("animation_id"), py::return_value_policy::reference);
+			 py::arg("animation_id"), py::return_value_policy::reference)
+		.def("addOffsetPoint", &SkeletalModel::addOffsetPoint,
+			 py::arg("joint_id"), py::arg("keypoint_id"));
 
 	py::class_<SkeletalAnimation, std::shared_ptr<SkeletalAnimation>>(module, "SkeletalAnimation")
 		.def(py::init<const std::string&>(), py::arg("filename"))

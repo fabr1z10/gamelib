@@ -26,9 +26,13 @@ std::shared_ptr<Tex> Tex::getTexture(const std::string &filename) {
 	}
 }
 
-Tex::Tex(const std::string &filename) : _texId(0), _paletteId(0) {
+Tex::Tex(const std::string &filename) : _texId(0), _paletteId(0), _hasCPUCopy(false) {
 	// remember 0 means no texture bound!
 	load(filename);
+}
+
+void Tex::keepCPUCopy(bool keep) {
+	_hasCPUCopy = keep;
 }
 
 Tex::~Tex() {
@@ -77,13 +81,15 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 
 	if (!isIndexed) {
 		// Convert all non-indexed formats → RGBA
-		if (color_type == PNG_COLOR_TYPE_GRAY)
-			png_set_gray_to_rgb(png);
-		if (color_type == PNG_COLOR_TYPE_RGB)
-			png_set_add_alpha(png, 0xFF, PNG_FILLER_AFTER);
-		if (png_get_valid(png, info, PNG_INFO_tRNS))
-			png_set_tRNS_to_alpha(png);
-		_format = Format::RGBA;
+		if (color_type == PNG_COLOR_TYPE_GRAY) {
+			_format = Format::GRAYSCALE;
+		} else {
+			if (color_type == PNG_COLOR_TYPE_RGB)
+				png_set_add_alpha(png, 0xFF, PNG_FILLER_AFTER);
+			if (png_get_valid(png, info, PNG_INFO_tRNS))
+				png_set_tRNS_to_alpha(png);
+			_format = Format::RGBA;
+		}
 	} else {
 		_format = Format::INDEXED;
 	}
@@ -160,6 +166,30 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		png_destroy_read_struct(&png, &info, nullptr);
+		if (_hasCPUCopy) {
+			// store data if requested
+			_cpuIndices = pixels;
+		}
+		return;
+	}
+
+
+	// --- GRAYSCALE PNG case ---
+	if (_format == Format::GRAYSCALE) {
+		glGenTextures(1, &_texId);
+		glBindTexture(GL_TEXTURE_2D, _texId);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _width, _height, 0,
+					 GL_RED, GL_UNSIGNED_BYTE, pixels.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		png_destroy_read_struct(&png, &info, nullptr);
+		if (_hasCPUCopy) {
+			_cpuIndices = pixels;
+		}
 		return;
 	}
 
@@ -171,7 +201,31 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
+	if (_hasCPUCopy) {
+		_cpuRGBA = pixels;
+	}
 	png_destroy_read_struct(&png, &info, nullptr);
 }
 
+uint8_t Tex::getIndex(int x, int y) {
+	if (_format != Format::INDEXED || !_hasCPUCopy)
+		throw std::runtime_error("Texture is not indexed or has no CPU copy");
+
+	return _cpuIndices[y * _width + x];
+}
+
+glm::ivec4 Tex::getColor(int x, int y) {
+	if (!_hasCPUCopy)
+		throw std::runtime_error("Texture has no CPU copy");
+	if (_format == Format::INDEXED) {
+		throw std::runtime_error("Use getIndex() for indexed textures");
+	} else if (_format == Format::GRAYSCALE) {
+		uint8_t gray = _cpuIndices[y * _width + x];
+		return glm::ivec4(gray, gray, gray, 255);
+	} else if (_format == Format::RGBA) {
+		int off = (y * _width + x) * 4;
+		return glm::ivec4(_cpuRGBA[off+0], _cpuRGBA[off+1], _cpuRGBA[off+2], _cpuRGBA[off+3]);
+	} else {
+		throw std::runtime_error("Unknown texture format");
+	}
+}

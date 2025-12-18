@@ -6,8 +6,8 @@
 
 
 void Mesh::generateKeyPoints(const YAML::Node &info) {
-	if (info["keypoints"]) {
-		auto kpNode = info["keypoints"];
+	if (info["key_points"]) {
+		auto kpNode = info["key_points"];
 		for (YAML::const_iterator it = kpNode.begin(); it != kpNode.end(); ++it) {
 			std::string name = it->first.as<std::string>();
 			auto point = it->second.as<glm::vec2>();
@@ -67,4 +67,14 @@ void Mesh::draw(IShader* s) {
     glBindVertexArray(_vao);
     glDrawElements(GL_TRIANGLES, _size, GL_UNSIGNED_INT, (GLvoid*)(sizeof(GLuint) * 0));
     glBindVertexArray(0);
+}
+
+
+glm::vec2 Mesh::getKeyPoint(const std::string &name) const {
+	auto it = _keyPoints.find(name);
+	if (it != _keyPoints.end()) {
+		return it->second;
+	} else {
+		return glm::vec2(0.0f);
+	}
 }

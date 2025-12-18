@@ -62,13 +62,12 @@ inline const glm::mat4 & Camera::getProjectionMatrix() const {
 
 class OrthoCamera : public Camera {
 public:
-	OrthoCamera(float width, float height, glm::vec4 viewport);
+	OrthoCamera(float width, float height, float near, float far, glm::vec4 viewport);
 
 	glm::vec2 getSize() const;
 
 private:
 	glm::vec2 _orthoSize;
-	glm::vec3 _halfSize;
 };
 
 inline glm::vec2 OrthoCamera::getSize() const {

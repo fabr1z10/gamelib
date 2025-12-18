@@ -49,12 +49,11 @@ glm::vec3 Camera::clampPosition(const glm::vec3 &pos) {
 }
 
 
-OrthoCamera::OrthoCamera(float width, float height, glm::vec4 viewport) :
+OrthoCamera::OrthoCamera(float width, float height, float near, float far, glm::vec4 viewport) :
 	Camera(viewport), _orthoSize(width, height) {
 	float hw = _orthoSize.x / 2.0f;
 	float hh = _orthoSize.y / 2.0f;
-	_projectionMatrix = glm::ortho(-hw, hw, -hh, hh, -100.0f, 100.0f);
-	_halfSize = glm::vec3(hw, hh, 100.f);
+	_projectionMatrix = glm::ortho(-hw, hw, -hh, hh, near, far);
 }
 
 PerspectiveCamera::PerspectiveCamera(glm::vec4 viewport, float fov, float near, float far) :

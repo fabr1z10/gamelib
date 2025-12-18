@@ -14,9 +14,13 @@
 #include "gamelib/shapes/polyline.h"
 #include "gamelib/shapes/rect.h"
 #include "gamelib/playercontroller2d.h"
+#include "gamelib/npccontroller2d.h"
+
 #include "gamelib/collisionengine.h"
 #include "gamelib/follow.h"
 #include "gamelib/quadstaticbatch.h"
+#include "gamelib/agi/agiroom.h"
+
 
 namespace py = pybind11;
 
@@ -29,6 +33,22 @@ void exportVec(py::module_& m) {
 		.def(py::init<int, int>())
 		.def_readwrite("x", &glm::ivec2::x)
 		.def_readwrite("y", &glm::ivec2::y);
+
+	py::class_<glm::ivec3>(m, "IVec3")
+		.def(py::init<>())
+		.def(py::init<int, int, int>())
+		.def_readwrite("x", &glm::ivec3::x)
+		.def_readwrite("y", &glm::ivec3::y)
+		.def_readwrite("z", &glm::ivec3::z);
+
+	py::class_<glm::ivec4>(m, "IVec4")
+		.def(py::init<>())
+		.def(py::init<int, int, int, int>())
+		.def_readwrite("x", &glm::ivec4::x)
+		.def_readwrite("y", &glm::ivec4::y)
+		.def_readwrite("z", &glm::ivec4::z)
+		.def_readwrite("w", &glm::ivec4::w);
+
 
 	py::class_<glm::vec2>(m, "Vec2")
 	 	.def(py::init<>())
@@ -128,6 +148,13 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 	py::module_ modSkeletal = mainModule.def_submodule("skeletal", "Skeletal submodule");
 	py::module_ modShapes = mainModule.def_submodule("shapes");
+	py::module_ modAGI = mainModule.def_submodule("agi");
+
+	py::enum_<agi::PriorityMode>(modAGI, "Priority")
+		.value("BASIC", agi::PriorityMode::PRIORITY_BASIC)
+		.value("AGI", agi::PriorityMode::PRIORITY_AGI)
+		.export_values();
+
 
 	py::class_<Shape, std::shared_ptr<Shape>>(mainModule, "Shape")
 		.def("toModel", &Shape::makeModel);
@@ -193,9 +220,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 	bindStaticBatch<VertexColorNormal, TrianglePrimitive>(mainModule, "StaticBatchColor");
 	bindStaticBatch<VertexColor, LinePrimitive>(mainModule, "StaticBatchLineColor");
-	bindStaticBatch<VertexTextureNormal, QuadPrimitive>(mainModule, "StaticBatchTextNormalQuad");
+	bindStaticBatch<VertexTextureRepeat, QuadPrimitive>(mainModule, "StaticBatchTextNormalQuad");
 
-	py::class_<QuadStaticBatch, StaticBatch<VertexTextureNormal, QuadPrimitive>,
+	py::class_<QuadStaticBatch, StaticBatch<VertexTextureRepeat, QuadPrimitive>,
 	        std::shared_ptr<QuadStaticBatch>>(mainModule, "QuadStaticBatch")
 		.def(py::init<IShader*, Camera*>(), py::arg("shader"), py::arg("camera"))
 		.def("addQuad", &QuadStaticBatch::addQuad,
@@ -233,6 +260,12 @@ PYBIND11_MODULE(gamelib, mainModule) {
 				self.setClearColor(glm::ivec3{r, g, b});
 			}, py::arg("r"), py::arg("g"), py::arg("b"));
 
+	py::class_<agi::AGIContext, std::shared_ptr<agi::AGIContext>>(modAGI, "AGIContext")
+		.def(py::init<const std::string&>(), py::arg("gameDir"));
+
+	py::class_<agi::AGIRoom, Room, std::shared_ptr<agi::AGIRoom>>(modAGI, "Room")
+		.def(py::init<const std::string&, std::shared_ptr<agi::AGIContext>>(), py::arg("id"), py::arg("context"));
+
 	py::class_<Camera, std::shared_ptr<Camera>>(mainModule, "Camera")
 			.def("setPosition",
 				 [](Camera &self,
@@ -246,18 +279,14 @@ PYBIND11_MODULE(gamelib, mainModule) {
 			.def("move", [](Camera &self, py::tuple delta) {
 				self.move(glm::vec3(delta[0].cast<float>(), delta[1].cast<float>(), delta[2].cast<float>()));
 			})
-			.def("setBounds", [](Camera &self, float xMin, float xMax, float yMin, float yMax, float zMin, float Zmax) {
-				self.setBounds(
-						glm::vec3(xMin, yMin, zMin),
-						glm::vec3(xMax, yMax, Zmax)
-				);
-			}, py::arg("xMin"), py::arg("xMax"), py::arg("yMin"), py::arg("yMax"), py::arg("zMin"), py::arg("zMax"));
+			.def("setBounds", &Camera::setBounds);
+
 
 
 	py::class_<OrthoCamera, Camera, std::shared_ptr<OrthoCamera>>(mainModule, "OrthoCamera")
-		.def(py::init([](float width, float height, py::tuple vp) {
-			return std::make_shared<OrthoCamera>(width, height, glm::vec4(vp[0].cast<float>(),vp[1].cast<float>(), vp[2].cast<float>(),vp[3].cast<float>()));
-		}), py::arg("width"), py::arg("height"), py::arg("viewport") = py::make_tuple(0.f, 0.f, 0.f, 0.f))
+		.def(py::init<float, float, float, float, glm::vec4>(),
+		     py::arg("width"), py::arg("height"), py::arg("near") = 0.1f, py::arg("far") = 100.f,
+		     py::arg("viewport") = glm::vec4(0.f, 0.f, 0.f, 0.f))
 		.def("size", [](OrthoCamera &self) {
 			return py::make_tuple(self.getSize().x, self.getSize().y);
 		});
@@ -286,6 +315,26 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		//.////def(py::init<IBatch*, int, int, int, int, int>(),
 		//	py::arg("batchId"), py::arg("x"), py::arg("y"), py::arg("w"), py::arg("h"), py::arg("pal"));
 
+	py::class_<QuadModelRepeat, IModel, std::shared_ptr<QuadModelRepeat>>(mainModule, "QuadModelRepeat")
+		.def(py::init([](IBatch* batch, glm::ivec4 texBounds, glm::vec2 size, glm::vec2 repeat) {
+			// Dummy QuadInfo for constructor
+			QuadInfo info;
+			info.x = 0;
+			info.y = 0;
+			info.width = size.x;
+			info.height = size.y;
+			info.tx0 = 0.f;
+			info.ty0 = 0.f;
+			info.tx1 = repeat.x;
+			info.ty1 = repeat.y;
+			info.flipx = false;
+			info.flipy = false;
+			info.anchorX=0;
+			info.anchorY = 0;
+			return std::make_shared<QuadModelRepeat>(batch, info, texBounds);
+		}));
+		//	py::arg("batch"), py::arg("info"), py::arg("texBounds"));
+
 	py::class_<Component, std::shared_ptr<Component>> component(mainModule, "Component");
 
 	py::class_<Node, std::shared_ptr<Node>>(mainModule, "Node")
@@ -311,6 +360,11 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def(py::init<float, float, int, int, float, float, float, float, glm::vec2>(), py::arg("width"), py::arg("height"),
 			py::arg("maskUp"), py::arg("maskDown"), py::arg("maxSpeed"), py::arg("jumpHeight"), py::arg("timeToJumpApex"),
 			py::arg("accelerationTime"), py::arg("anchor") = glm::vec2(0.f, 0.f));
+
+	py::class_<NPCController2D, Controller2D, std::shared_ptr<NPCController2D>>(mainModule, "NPCController2D")
+			.def(py::init<float, float, int, int, float, float, float, float, glm::vec2>(), py::arg("width"), py::arg("height"),
+				 py::arg("maskUp"), py::arg("maskDown"), py::arg("maxSpeed"), py::arg("jumpHeight"), py::arg("timeToJumpApex"),
+				 py::arg("accelerationTime"), py::arg("anchor") = glm::vec2(0.f, 0.f));
 
 	py::class_<Follow, Component, std::shared_ptr<Follow>>(mainModule, "Follow")
 		.def(py::init<const std::string&, glm::vec3>(), py::arg("camId"), py::arg("relative_pos") = glm::vec3(0,0,5));

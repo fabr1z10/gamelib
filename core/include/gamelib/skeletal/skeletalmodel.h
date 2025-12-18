@@ -26,7 +26,7 @@ public:
     // every skeletal model has by default a root joint (0)
 	SkeletalModel(const std::string& camId);
 
-    int addJoint(const std::string& joint, int parent, glm::ivec2 position);
+    int addJoint(const std::string& joint, int parent, glm::ivec2 position, float scale = 1.f, float z=0.f);
 
 	void setAnimation(const std::string&) override;
 
@@ -74,6 +74,7 @@ public:
 	void draw(IShader*) override;
 	void update() override ;
 
+	void addOffsetPoint(const std::string& jointId, const std::string& keyPointId);
 private:
 	std::unordered_map<int, JointTransform> interpolatePoses(
 			KeyFrame* previousFrame, KeyFrame* nextFrame, float progression);
@@ -84,10 +85,10 @@ private:
     std::vector<JointInfo> _jointInfos;
     std::vector<glm::mat4> _invRestTransforms2;
     std::vector<glm::mat4> _restTransforms2;
+	std::vector<glm::mat4> _globalPose;   // model-space joint transforms
 
-
-    std::vector<std::pair<std::string, std::string>> m_offsetPointIds;
-    std::vector<std::pair<int, glm::vec3>> m_offsetPoints;
+    std::vector<std::pair<int, std::string>> m_offsetPointIds;
+    //std::vector<std::pair<int, glm::vec3>> m_offsetPoints;
 
     // this is just a map from joint name to joint id
     std::unordered_map<std::string, int> _jointNameToId;
@@ -136,9 +137,9 @@ inline size_t SkeletalModel::getJointCount() const {
     return _jointInfos.size();
 }
 
-inline const std::vector<std::pair<int, glm::vec3>>& SkeletalModel::getOffsetPoints() const {
-    return m_offsetPoints;
-}
+//inline const std::vector<std::pair<int, glm::vec3>>& SkeletalModel::getOffsetPoints() const {
+//    return m_offsetPoints;
+//}
 
 inline int SkeletalModel::getJointId(const std::string & id) {
     auto i = _jointNameToId.find(id);

@@ -32,7 +32,7 @@ add_subdirectory(external/pybind11)
 # ----------------------------------------------------
 # 1️⃣ Build the C++ core library (engine only)
 # ----------------------------------------------------
-file(GLOB ENGINE_SOURCES CONFIGURE_DEPENDS core/src/*.cpp core/src/shapes/*.cpp core/src/skeletal/*.cpp)
+file(GLOB ENGINE_SOURCES CONFIGURE_DEPENDS core/src/*.cpp core/src/shapes/*.cpp core/src/skeletal/*.cpp core/src/agi/*.cpp)
 
 add_library(gamelib_core STATIC ${ENGINE_SOURCES})
 

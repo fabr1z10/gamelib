@@ -5,6 +5,7 @@
 #include "gamelib/node.h"
 #include <glm/gtc/type_ptr.hpp>
 #include "gamelib/spritesheet.h"
+#include "primitives.h"
 
 // this is for dynamic batches!
 template<typename VERTEX, typename PRIMITIVE>
@@ -60,7 +61,7 @@ public:
 		glBindVertexArray(0);
 	}
 
-	void initBatch(Node* node) {
+	virtual void initBatch(Node* node) {
 		auto vp = _cam->getViewport();
 		glViewport(vp.x, vp.y, vp.z, vp.w);
 
@@ -99,5 +100,4 @@ protected:
 
 
 };
-
 

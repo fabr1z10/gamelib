@@ -11,6 +11,7 @@ class Mesh {
 public:
     Mesh(const std::string& file, const std::string& id);
     void draw(IShader*);
+	glm::vec2 getKeyPoint(const std::string& name) const;
 private:
     void generateBuffers(const std::vector<float>& points, const std::vector<unsigned>& indices);
 	void generateKeyPoints(const YAML::Node& info);

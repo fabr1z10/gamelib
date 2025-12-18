@@ -13,14 +13,22 @@ void SkeletalModel::setMesh(int jointId, std::shared_ptr<Mesh> mesh) {
     _jointInfos[jointId].mesh = mesh;
 }
 
-int SkeletalModel::addJoint(const std::string& name, int parent, glm::ivec2 position) {
+void SkeletalModel::addOffsetPoint(const std::string &jointId, const std::string &keyPointId) {
+	if (_jointNameToId.find(jointId) == _jointNameToId.end()) {
+		return;
+	}
+	int jid = _jointNameToId.at(jointId);
+	m_offsetPointIds.emplace_back(jid, keyPointId);
+}
+
+int SkeletalModel::addJoint(const std::string& name, int parent, glm::ivec2 position, float scale, float z) {
     JointInfo info;
     info.id = _jointInfos.size();
     info.parent = parent;
     info.mesh = nullptr;
     JointTransform tr;
-    tr.scale = glm::vec3(1.f);
-    tr.translation = glm::vec3(position.x, position.y, 0.0f);
+    tr.scale = glm::vec3(scale);
+    tr.translation = glm::vec3(position.x, position.y, z);
     info.restTransform = tr;
     info.weightIndex = glm::ivec3(info.id, parent, 0);
     _jointInfos.push_back(info);
@@ -30,17 +38,20 @@ int SkeletalModel::addJoint(const std::string& name, int parent, glm::ivec2 posi
 }
 
 void SkeletalModel::init() {
-    std::unordered_map<int, JointTransform> p;
-    _invRestTransforms2 = std::vector<glm::mat4>(_jointInfos.size());
-    for (size_t i = 0; i < _invRestTransforms2.size(); ++i) {
-        _invRestTransforms2[i] = glm::mat4(1.0f);
-    }
-    _restTransforms2 = calculateCurrentPose(p);
-    for (size_t i = 0; i <_invRestTransforms2.size(); ++i) {
-        _restTransforms2[i][3][2] = _jointInfos[i].z;
-        _invRestTransforms2[i] = glm::inverse(_restTransforms2[i]);
-        //m_invRestTransforms2[i][3][2] = -m_jointInfos[i].z;
-    }
+	// prepare containers
+	size_t n = _jointInfos.size();
+	_invRestTransforms2.assign(n, glm::mat4(1.0f));
+	_globalPose.assign(n, glm::mat4(1.0f));
+
+	// calculate rest pose (no animation)
+	std::unordered_map<int, JointTransform> emptyPose;
+	_restTransforms2 = calculateCurrentPose(emptyPose);
+
+	// compute inverse of rest transforms for skinning
+	for (size_t i = 0; i < n; ++i) {
+		// _restTransforms2[i] is already model-space transform of joint in rest pose
+		_invRestTransforms2[i] = glm::inverse(_restTransforms2[i]);
+	}
 }
 
 SkeletalModel::SkeletalModel(const std::string& camId) : IModel(), _currentAnimation(nullptr), _camId(camId), _animationTime(0.f) {
@@ -64,7 +75,7 @@ SkeletalModel::SkeletalModel(const std::string& camId) : IModel(), _currentAnima
 	_boneLocation = glGetUniformLocation(shader->getProgramId(), "Bone");
 	_l2mLocation = glGetUniformLocation(shader->getProgramId(), "local_to_model");
 	_weightIndexLocation = glGetUniformLocation(shader->getProgramId(), "weightIndex");
-	_zLocation = glGetUniformLocation(shader->getProgramId(), "z");
+	//_zLocation = glGetUniformLocation(shader->getProgramId(), "z");
 
 }
 
@@ -79,6 +90,7 @@ std::vector<glm::mat4> SkeletalModel::calculateCurrentPose(std::unordered_map<in
     std::vector<glm::mat4> result(_jointInfos.size());
     std::list<std::pair<int, glm::mat4>> joints;
     joints.emplace_back(0, glm::mat4(1.0));
+
     while (!joints.empty()) {
         auto current = joints.front();
         joints.pop_front();
@@ -90,8 +102,9 @@ std::vector<glm::mat4> SkeletalModel::calculateCurrentPose(std::unordered_map<in
             localTransform += i->second;
         }
         auto localMat = localTransform.getLocalTransform();
-        auto modelMat = current.second * localMat * glm::scale(glm::vec3(joint.scale));
+        auto modelMat = current.second * localMat;// * glm::scale(glm::vec3(joint.scale));
         result[current.first] = modelMat * _invRestTransforms2[current.first];
+		_globalPose[current.first] = modelMat;
         // TODO convert to global mat
         for (const auto &child : joint.children) {
             joints.emplace_back(child, modelMat);
@@ -116,18 +129,18 @@ SkeletalAnimation * SkeletalModel::getAnimation(const std::string &id) {
     return it->second.get();
 }
 
-//void SkeletalModel::computeOffset() {
+void SkeletalModel::computeOffset() {
 //    m_offsetPoints.clear();
-//    for (const auto& p : m_offsetPointIds) {
-//        int jointId = m_jointNameToId.at(p.first);
-//        if (_jointInfos[jointId].mesh == nullptr) {
-//            continue;
-//        }
-//        auto kp = _jointInfos[jointId].mesh->getKeyPoint(p.second);
-//        auto mp = m_restTransforms2[jointId] * glm::vec4(kp.x, kp.y, 0.0f, 1.0f);
-//        m_offsetPoints.emplace_back(jointId, glm::vec3(mp.x, mp.y, 0.0f));
-//    }
-//}
+	_offset = glm::vec3(0.0f);
+    for (const auto& p : m_offsetPointIds) {
+		if (_jointInfos[p.first].mesh != nullptr) {
+			auto kp = _jointInfos[p.first].mesh->getKeyPoint(p.second);
+			auto mp = _globalPose[p.first] * glm::vec4(kp.x, kp.y, 0.0f, 1.0f);
+			std::cout << "pippo " << mp.y <<"\n";
+			_offset.y = std::max(_offset.y, -mp.y);
+		}
+	}
+}
 
 //std::shared_ptr<Shape> SkeletalModel::getShape (const std::string& anim) const {
 //    const auto& it = m_animShapes.find(anim);
@@ -230,7 +243,7 @@ void SkeletalModel::update() {
 
 	// compute offset
 	// apply offset
-	glm::vec3 offset(0.0f);
+	this->computeOffset();
 //	for (const auto& m : m_offsetPointIds) {
 //		_
 //		//_bones[m.first] *
@@ -246,7 +259,7 @@ void SkeletalModel::update() {
 //		//std::cerr << offset.y << "\n";
 //		SetTransform(glm::translate(offset));
 //	}
-	_offset = glm::vec3(0.f, 100.f, 0.f);
+
 	//draw();
 	// apply offset
 //    const auto& offsetPoints = _skeletalModel->getOffsetPoints();

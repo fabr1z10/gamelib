@@ -64,19 +64,19 @@ public:
 		glBindVertexArray(0);
 	}
 
-	void setupUniforms() {
-		auto vp = _cam->getViewport();
-		glViewport(vp.x, vp.y, vp.z, vp.w);
-		int jointMatrixLoc = glGetUniformLocation(_shader->getProgramId(), "mvp_mat");
-		auto pvMatrix =  _cam->getProjectionMatrix() * _cam->getViewMatrix();
-		glUniformMatrix4fv(jointMatrixLoc, 1, GL_FALSE, glm::value_ptr(pvMatrix[0]));
-
-		if (_spriteSheet) {
-
-			_spriteSheet->setupGL(_shader);
-		}
-
-	}
+	virtual void setupUniforms() = 0; //{
+//		auto vp = _cam->getViewport();
+//		glViewport(vp.x, vp.y, vp.z, vp.w);
+//		int jointMatrixLoc = glGetUniformLocation(_shader->getProgramId(), "mvp_mat");
+//		auto pvMatrix =  _cam->getProjectionMatrix() * _cam->getViewMatrix();
+//		glUniformMatrix4fv(jointMatrixLoc, 1, GL_FALSE, glm::value_ptr(pvMatrix[0]));
+//
+//		if (_spriteSheet) {
+//
+//			_spriteSheet->setupGL(_shader);
+//		}
+//
+//	}
 
 	const std::type_info& vertexType() const override {
 		return typeid(VERTEX);
@@ -88,3 +88,25 @@ private:
 	size_t _maxPrimitives;
 
 };
+
+template<typename VERTEX, typename PRIMITIVE>
+class DynamicBatch : public Batch<VERTEX, PRIMITIVE> {
+public:
+	using Batch<VERTEX, PRIMITIVE>::Batch;
+
+	virtual void setupUniforms() {
+		auto vp = IBatch::_cam->getViewport();
+		glViewport(vp.x, vp.y, vp.z, vp.w);
+		int jointMatrixLoc = glGetUniformLocation(IBatch::_shader->getProgramId(), "mvp_mat");
+		auto pvMatrix = IBatch::_cam->getProjectionMatrix() * IBatch::_cam->getViewMatrix();
+		glUniformMatrix4fv(jointMatrixLoc, 1, GL_FALSE, glm::value_ptr(pvMatrix[0]));
+
+		if (IBatch::_spriteSheet) {
+			IBatch::_spriteSheet->setupGL(IBatch::_shader);
+		}
+	}
+};
+
+
+
+

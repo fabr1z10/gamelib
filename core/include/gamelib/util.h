@@ -5,8 +5,15 @@
 #include <unordered_map>
 
 struct QuadInfo {
+	QuadInfo() = default;
 	//QuadInfo(int x, int y, int w, int h, int pal = 0, bool flipx = false, bool flipy = false) :
 	//	x(x), y(y), width(w), height(h), palette(pal) {}
+	QuadInfo(int width, int height) : tx0(0.f), ty0(0.f), tx1(1.f), ty1(1.f), width(width), height(height) {}
+
+	QuadInfo(int width, int height, float tx0, float ty0, float tx1, float ty1) :
+		tx0(tx0), ty0(ty0), tx1(tx1), ty1(ty1), width(width), height(height) {}
+
+
 
 	float tx0 = 0.f, ty0 = 0.f;
 	float tx1 = 0.f, ty1 = 0.f;
