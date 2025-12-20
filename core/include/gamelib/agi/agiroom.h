@@ -1,11 +1,14 @@
 #pragma once
 
+#include <string>
 #include "gamelib/room.h"
 #include "gamelib/keylistener.h"
-#include <string>
 #include "gamelib/agi/priority.h"
+#include "gamelib/tex.h"
 
 namespace agi {
+
+	class AGIObject;
 
 	struct ObjectInfo {
 		std::string model = "0";
@@ -35,6 +38,12 @@ namespace agi {
 		void initialize() override;
 
 		int getRoomHeight() const;
+
+		int test(int x, int y);
+
+		std::string getId() const;
+
+		void addObject(std::shared_ptr<agi::AGIObject>);
 	private:
 		std::string _roomId;
 		int _roomHeight;
@@ -42,9 +51,14 @@ namespace agi {
 		int _gameHeight;
 		std::shared_ptr<AGIContext> _agi;
 		std::shared_ptr<PriorityCalculator> _priorityCalculator;
+		std::shared_ptr<Tex> _controlImage;
 	};
 
 	inline int AGIRoom::getRoomHeight() const {
 		return _roomHeight;
+	}
+
+	inline std::string AGIRoom::getId() const {
+		return _roomId;
 	}
 }

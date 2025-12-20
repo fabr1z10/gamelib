@@ -49,7 +49,12 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 		}
 		auto picture = roomData["bg"]["picture"].as<std::string>();
 		auto prio = roomData["bg"]["priority"].as<std::string>();
+		auto ctrl = roomData["bg"]["control"].as<std::string>();
 		auto spriteSheet = roomData["spritesheet"].as<std::string>();
+
+		_controlImage = std::make_shared<Tex>();
+		_controlImage->keepCPUCopy(true);
+		_controlImage->load(ctrl);
 
 		// create game camera
 		_gameWidth = 160;
@@ -121,6 +126,17 @@ int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mo
 	return 0;
 }
 
+int AGIRoom::test(int x, int y) {
+	int color = _controlImage->getIndex(x, _controlImage->getSize()[1]-y);
+	return color;
+}
+
+void AGIRoom::addObject(std::shared_ptr<agi::AGIObject> node) {
+	node->setPriorityCalculator(_priorityCalculator);
+	this->getRootNode()->add(node);
+
+}
+
 void AGIRoom::initialize() {
 	Room::initialize();
 	QuadInfo info(_gameWidth, _gameHeight);
@@ -130,7 +146,7 @@ void AGIRoom::initialize() {
 	this->getRootNode()->add(node);
 
 	// adding objects
-	auto spriteBatch = getBatch("spr");
+/*	auto spriteBatch = getBatch("spr");
 	for (const auto& [key, objInfo] : _agi->objects) {
 		if (objInfo.room == _roomId) {
 			auto model = spriteBatch->getModel(objInfo.model);
@@ -139,5 +155,6 @@ void AGIRoom::initialize() {
 			node->setModel(model);
 			this->getRootNode()->add(node);
 		}
-	}
+	}*/
 }
+

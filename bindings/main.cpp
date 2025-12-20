@@ -20,7 +20,7 @@
 #include "gamelib/follow.h"
 #include "gamelib/quadstaticbatch.h"
 #include "gamelib/agi/agiroom.h"
-
+#include "gamelib/agi/agiobject.h"
 
 namespace py = pybind11;
 
@@ -264,7 +264,10 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def(py::init<const std::string&>(), py::arg("gameDir"));
 
 	py::class_<agi::AGIRoom, Room, std::shared_ptr<agi::AGIRoom>>(modAGI, "Room")
-		.def(py::init<const std::string&, std::shared_ptr<agi::AGIContext>>(), py::arg("id"), py::arg("context"));
+		.def(py::init<const std::string&, std::shared_ptr<agi::AGIContext>>(), py::arg("id"), py::arg("context"))
+		.def("addObject", &agi::AGIRoom::addObject)
+		.def_property_readonly("id", &agi::AGIRoom::getId);
+
 
 	py::class_<Camera, std::shared_ptr<Camera>>(mainModule, "Camera")
 			.def("setPosition",
@@ -346,6 +349,15 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def("setPosition", &Node::setPosition)
 		.def("setScale", &Node::setScale, py::arg("scale"))
 		.def("setMatrix", &Node::setModelMatrix, py::arg("matrix"));
+
+	py::class_<agi::AGIObject, Node, std::shared_ptr<agi::AGIObject>>(modAGI, "Object")
+			.def(py::init<int, int, float>(), py::arg("x"), py::arg("y"), py::arg("speed"))
+			.def("setCallback", [](agi::AGIObject& object, int id, py::function f) {
+				object.setCallback(id, [f] (int x, int y) -> int {
+					py::gil_scoped_acquire gil;
+					return f(x, y).cast<int>();
+				});
+			});
 
 
 	py::class_<Controller2D, Component, std::shared_ptr<Controller2D>>(mainModule, "Controller2D");
