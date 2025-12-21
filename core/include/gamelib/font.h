@@ -2,7 +2,9 @@
 
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
-#include "batch.h"
+#include "gamelib/batch.h"
+
+class SpriteSheet;
 
 struct CharInfo {
 	// texture top left
@@ -17,32 +19,52 @@ struct CharInfo {
 
 
 class Font {
-
 public:
-	Font(const YAML::Node& node, int width, int height);
-	const CharInfo& getCharInfo(char32_t c);
+	Font(const YAML::Node& node, SpriteSheet* batch);
+
 	float getLineHeight() const;
-	int getBatchId() const;
-	int getTexId() const;
-private:
-	std::u32string getString32(const std::string&);
-	std::unordered_map<char32_t, CharInfo> m_info;
+
+	static std::u32string getString32(const std::string&);
+
+	// TODO create a model
+	virtual std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const = 0;
+
+	static std::shared_ptr<Font> makeFont(const YAML::Node& node, SpriteSheet* b);
+protected:
 	float _lineHeight;
-	int _texId;
-	int _batchId;
+	SpriteSheet* _sheet;
 };
 
-inline int Font::getBatchId() const {
-	return _batchId;
-}
-inline int Font::getTexId() const {
-	return _texId;
-}
 
-inline const CharInfo & Font::getCharInfo(char32_t c) {
-	return m_info.at(c);
-}
 
 inline float Font::getLineHeight() const {
 	return _lineHeight;
 }
+
+class GenericFont : public Font {
+public:
+	GenericFont(const YAML::Node& node, SpriteSheet* batch);
+
+	const CharInfo& getCharInfo(char32_t c) const;
+
+	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const override;
+
+private:
+	std::unordered_map<char32_t, CharInfo> m_info;
+
+};
+
+inline const CharInfo& GenericFont::getCharInfo(char32_t c) const {
+	return m_info.at(c);
+}
+
+// monospaced font --- every character has an index that corresponds to a TILE
+class MonospacedFont : public Font {
+public:
+	MonospacedFont(const YAML::Node& node, SpriteSheet*);
+
+	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const override;
+
+private:
+	std::unordered_map<char32_t, int> _info;
+};

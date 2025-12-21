@@ -1,21 +1,75 @@
 #include "gamelib/font.h"
 #include <locale>
 #include <codecvt>
+#include "gamelib/tilegrid.h"
+
+std::shared_ptr<Font> Font::makeFont(const YAML::Node &node, SpriteSheet *batch) {
+	auto fontType = node["type"].as<std::string>();
+	if (fontType == "mono") {
+		return std::make_shared<MonospacedFont>(node, batch);
+	} else {
+		return std::make_shared<GenericFont>(node, batch);
+	}
+}
+
+std::shared_ptr<IModel> GenericFont::buildModel(IBatch *, const std::vector<std::string>&) const {
+	return nullptr;
+}
+
+std::shared_ptr<IModel> MonospacedFont::buildModel(IBatch* batch, const std::vector<std::string>& text) const {
+	size_t height = text.size();
+	size_t width = text.front().size();
+	for (size_t i = 0; i< text.size(); ++i) {
+		width = std::max(width, text[i].size());
+	}
+	std::stringstream stream;
+	for (const auto& row : text) {
+		auto s32 = Font::getString32(row);
+		int cw = 0;
+		for (const auto &c: s32) {
+			int index = _info.at(c);
+			stream << index << " ";
+			cw++;
+		}
+		if (cw < width) {
+			for (size_t j = 0; j < cw - width; j++) {
+				stream << "_ ";
+			}
+		}
+		stream << "| ";
+	}
+
+	return std::make_shared<TileGrid>(batch, stream.str());
+}
+
+Font::Font(const YAML::Node &node, SpriteSheet *sheet) : _sheet(sheet) {
+	_lineHeight = node["height"].as<float>();
+
+}
 
 
-Font::Font(const YAML::Node &node, int width, int height)
+MonospacedFont::MonospacedFont(const YAML::Node &node, SpriteSheet* sheet) : Font(node, sheet) {
+
+	for (const auto& n : node["chars"]) {
+		auto chars = n.first.as<std::string>();
+		auto sss = getString32(chars);
+		auto index = n.second.as<int>();
+		char32_t w = sss[0];
+		_info[w] = index;
+	}
+}
+
+GenericFont::GenericFont(const YAML::Node &node, SpriteSheet* sheet) : Font(node, sheet)
 {
 	// need to get shader tex id from this
-	auto tw = (float) width;
-	auto th = (float) height;
-	_lineHeight = node["height"].as<float>();
+	auto tw = sheet->getSize().x;
+	auto th = sheet->getSize().y;
 	for (const auto& n : node["chars"]) {
 		auto chars = n.first.as<std::string>();
 		auto sss = getString32(chars);
 		auto data = n.second.as<std::vector<float>>();
 		int u = 0;
 		for (char32_t w : sss) {
-			//std::cout << "loading character: " << w << "\n";
 			if (u % 2 == 0) {
 				m_info[w] = CharInfo{
 						data[0] / tw, data[1] / th, data[2] / tw, data[3] / th,     // tex coords

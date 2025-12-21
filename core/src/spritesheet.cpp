@@ -59,14 +59,25 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 		std::string fullName = Game::instance().getHomeDir() + "/" + filename;
 		YAML::Node config = YAML::LoadFile(fullName);
 		auto image = YAML::read<std::string>(config, "image");
+
+		_tileSize = config["tilesize"].as<int>(1);
 		//_tex = Tex::getTexture(image);
 		if (config["palettes"]) {
+
 			std::cout << "Loading palettes for spritesheet " << filename << std::endl;
-			for (auto p : config["palettes"]) {
-				auto id = p.first.as<std::string>();
+			auto palettesNode = config["palettes"];
+			for (auto it = palettesNode.begin(); it != palettesNode.end(); ++it) {
+				auto id = it->first.as<std::string>();
+				const YAML::Node& colorList = it->second;
 				Palette pal(id);
-				for (auto col : p.second) {
-					pal.addColor(col.first.as<int>(), col.second.as<glm::ivec4>());
+				for (const YAML::Node& colorMap  : colorList) {
+					if (!colorMap.IsMap())
+						throw std::runtime_error("Each palette entry must be a map with 'from' and 'to'");
+
+					std::string fromStr = colorMap["from"].as<std::string>();
+					std::string toStr = colorMap["to"].as<std::string>();
+
+					pal.addColor(fromStr, toStr);
 				}
 				_palettes.push_back(pal);
 				_paletteNameToIndex[id] = _palettes.size();
@@ -108,6 +119,7 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 				_sprites[id] = info;
 			}
 		}
+		loadFonts(config);
 
 
 	} catch (const YAML::BadFile& e) {
@@ -134,4 +146,26 @@ void SpriteSheet::setupGL(IShader* shader) const {
 		GLint locPalette = glGetUniformLocation(shader->getProgramId(), "texture_palette");
 		glUniform1i(locPalette, 1); // Bind to texture unit 1
 	}
+}
+
+void SpriteSheet::loadFonts(const YAML::Node & node) {
+	if (node["fonts"]) {
+		for (const auto& font : node["fonts"]) {
+			auto fontName = font.first.as<std::string>();
+			_fonts[fontName] = Font::makeFont(font.second, this);
+		}
+	}
+}
+
+glm::vec4 SpriteSheet::getTexCoords(int n) const {
+	auto size = _tex->getSize();
+	float ts_nx = (float)_tileSize / size.x;
+	float ts_ny = (float)_tileSize / size.y;
+	int tilesPerRow = size.x / _tileSize;
+	int tilesPerCol = size.y / _tileSize;
+	int row = n / tilesPerRow;
+	int col = n % tilesPerRow;
+	float tx0 = col * ts_nx;
+	float ty0 = row * ts_ny;
+	return {tx0, ty0, ts_nx, ts_ny};
 }

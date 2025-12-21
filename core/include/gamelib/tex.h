@@ -14,16 +14,16 @@ public:
 
 	//glm::ivec4 getColor(int index, const glm::ivec4& defaultColor) const;
 
-	void addColor(int, glm::ivec4);
+	void addColor(const std::string&, const std::string&);
 
-	const std::unordered_map<int, glm::ivec4>& getColors() const;
+	const std::unordered_map<uint32_t, uint32_t >& getColors() const;
 
 private:
 	std::string _name;
-	std::unordered_map<int, glm::ivec4> _colors;
+	std::unordered_map<uint32_t, uint32_t> _colors;
 };
 
-inline const std::unordered_map<int, glm::ivec4> &Palette::getColors() const {
+inline const std::unordered_map<uint32_t, uint32_t >& Palette::getColors() const {
 	return _colors;
 }
 
@@ -61,6 +61,9 @@ public:
 	glm::ivec4 getColor(int x, int y);
 
 	uint8_t getIndex(int x, int y);
+
+	static uint32_t packColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+	static uint32_t parseHexColorRGBA(const std::string& s);
 private:
 
 	static std::unordered_map<std::string, std::shared_ptr<Tex>> _textureStore;

@@ -6,7 +6,9 @@
 #include "gamelib/tex.h"
 #include "gamelib/spritesheet.h"
 #include "gamelib/model.h"
+#include "gamelib/tilegrid.h"
 #include "gamelib/node.h"
+#include "gamelib/text.h"
 #include "gamelib/static_batch.h"
 #include "gamelib/static_model.h"
 #include "gamelib/shape.h"
@@ -155,6 +157,23 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.value("AGI", agi::PriorityMode::PRIORITY_AGI)
 		.export_values();
 
+	py::enum_<HAlign>(mainModule, "HAlign")
+		.value("LEFT", HAlign::LEFT)
+		.value("CENTER", HAlign::CENTER)
+		.value("RIGHT", HAlign::RIGHT)
+		.export_values();
+
+	py::enum_<Anchor>(mainModule, "Anchor")
+		.value("TOP_LEFT", Anchor::TOP_LEFT)
+		.value("TOP", Anchor::TOP)
+		.value("TOP_RIGHT", Anchor::TOP_RIGHT)
+		.value("LEFT", Anchor::LEFT)
+		.value("CENTER", Anchor::CENTER)
+		.value("RIGHT", Anchor::RIGHT)
+		.value("BOTTOM_LEFT", Anchor::BOTTOM_LEFT)
+		.value("BOTTOM", Anchor::BOTTOM)
+		.value("BOTTOM_RIGHT", Anchor::BOTTOM_RIGHT)
+		.export_values();
 
 	py::class_<Shape, std::shared_ptr<Shape>>(mainModule, "Shape")
 		.def("toModel", &Shape::makeModel);
@@ -241,6 +260,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<StaticModel<VertexColor, LinePrimitive>,
 			IModel, std::shared_ptr<StaticModel<VertexColor, LinePrimitive>>>(mainModule, "LineColorModel")
 			.def(py::init<IBatch*>(), py::arg("batch"));
+
+	py::class_<TileGrid, IModel, std::shared_ptr<TileGrid>>(mainModule, "TileGrid")
+		.def(py::init<IBatch*, const std::string&>(), py::arg("batch"), py::arg("data"));
 
 	py::class_<IShader>(mainModule, "Shader", py::dynamic_attr())
 			.def("getBatch", &IShader::createBatch);
@@ -349,6 +371,12 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def("setPosition", &Node::setPosition)
 		.def("setScale", &Node::setScale, py::arg("scale"))
 		.def("setMatrix", &Node::setModelMatrix, py::arg("matrix"));
+
+	py::class_<Text, Node, std::shared_ptr<Text>>(mainModule, "Text")
+		.def(py::init<IBatch*, const std::string&, const std::string&, int, HAlign, float, Anchor>(),
+		     py::arg("batch"), py::arg("font"), py::arg("text"), py::arg("palette"),
+		     py::arg("align") = HAlign::LEFT, py::arg("maxWidth") = 0.0f, py::arg("anchor") = Anchor::TOP_LEFT);
+
 
 	py::class_<agi::AGIObject, Node, std::shared_ptr<agi::AGIObject>>(modAGI, "Object")
 			.def(py::init<int, int, float>(), py::arg("x"), py::arg("y"), py::arg("speed"))

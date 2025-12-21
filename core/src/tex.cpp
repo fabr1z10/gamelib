@@ -11,8 +11,36 @@ std::unordered_map<std::string, std::shared_ptr<Tex>> Tex::_textureStore;
 
 Palette::Palette(const std::string &name) : _name(name) {}
 
-void Palette::addColor(int index, glm::ivec4 color) {
-	_colors[index] = color;
+void Palette::addColor(const std::string& from, const std::string& to) {
+	_colors[Tex::parseHexColorRGBA(from)] = Tex::parseHexColorRGBA(to);
+}
+
+uint32_t Tex::packColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	return (r << 24) | (g << 16) | (b << 8) | a;
+}
+
+uint32_t Tex::parseHexColorRGBA(const std::string& s)
+{
+	if (s.size() != 9 || s[0] != '#')
+		throw std::runtime_error("Invalid color format (expected #rrggbbaa)");
+
+	auto hexByte = [&](int i) -> uint8_t {
+		auto hex = [](char c) -> int {
+			if (c >= '0' && c <= '9') return c - '0';
+			if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+			if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+			throw std::runtime_error("Invalid hex digit in color");
+		};
+		return uint8_t((hex(s[i]) << 4) | hex(s[i + 1]));
+	};
+
+	uint8_t r = hexByte(1);
+	uint8_t g = hexByte(3);
+	uint8_t b = hexByte(5);
+	uint8_t a = hexByte(7);
+
+	// Pack with RED in MSB, ALPHA in LSB
+	return (uint32_t(r) << 24) | (uint32_t(g) << 16) | (uint32_t(b) << 8) | uint32_t(a);
 }
 
 std::shared_ptr<Tex> Tex::getTexture(const std::string &filename) {
@@ -123,11 +151,18 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 		std::vector<unsigned char> pal(num_palettes * PALETTE_SIZE, 0);
 
 		// base palette
+		std::unordered_map<uint32_t, uint32_t> paletteMap;
+
 		for (int i = 0; i < num_palette; i++) {
 			pal[i*4+0] = plte[i].red;
 			pal[i*4+1] = plte[i].green;
 			pal[i*4+2] = plte[i].blue;
-			pal[i*4+3] = (i < num_trans) ? trans[i] : 255;
+			unsigned char alpha = (i < num_trans) ? trans[i] : 255;
+			pal[i*4+3] = alpha;
+			paletteMap[packColor(plte[i].red, plte[i].green, plte[i].blue, alpha)] = i;
+		}
+		for (const auto& [a,b] : paletteMap) {
+			std::cout << std::hex << a << ": " << b << "\n";
 		}
 
 		// additional palettes
@@ -136,12 +171,20 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 			for (auto &P : *palettes) {
 				std::memcpy(&pal[pIndex * PALETTE_SIZE], &pal[0], PALETTE_SIZE);
 
-				for (auto &[idx, col] : P.getColors()) {
-					int off = pIndex*PALETTE_SIZE + idx*4;
-					pal[off+0] = col.r;
-					pal[off+1] = col.g;
-					pal[off+2] = col.b;
-					pal[off+3] = col.a;
+				for (auto &[color_from, color_to] : P.getColors()) {
+					// check if this color exits in the original palette
+					auto it = paletteMap.find(color_from);
+					if (it != paletteMap.end()) {
+						auto idx = it->second;
+						int off = pIndex*PALETTE_SIZE + idx * 4;
+						pal[off+0] = (color_to & 0xFF000000) >> 24;
+						pal[off+1] = (color_to & 0x00FF0000) >> 16;
+						pal[off+2] = (color_to & 0x0000FF00) >> 8;
+						pal[off+3] = (color_to & 0x000000FF);
+					}
+
+
+
 				}
 				pIndex++;
 			}

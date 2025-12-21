@@ -51,6 +51,7 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 		auto prio = roomData["bg"]["priority"].as<std::string>();
 		auto ctrl = roomData["bg"]["control"].as<std::string>();
 		auto spriteSheet = roomData["spritesheet"].as<std::string>();
+		auto fonts = roomData["fonts"].as<std::string>();
 
 		_controlImage = std::make_shared<Tex>();
 		_controlImage->keepCPUCopy(true);
@@ -66,6 +67,10 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 					  glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, 100.f));
 		addCamera("game", gameCam);
 
+		auto textCam = std::make_shared<OrthoCamera>(320, 200, 0.f, 1.f, glm::vec4(0, 0, 320, 200));
+		textCam->setBounds(glm::vec3(160, 100, -100), glm::vec3(160, 100, 100));
+		addCamera("text", textCam);
+
 		// create shader for sprites
 		auto shader = Game::instance().getShader("sprite_pal");
 
@@ -74,12 +79,15 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 
 		auto bgBatch = std::dynamic_pointer_cast<AGIBatch<VertexTexturePalette, QuadPrimitive>>(agiShader->createBatch(gameCam.get(), 1024));
 		auto spriteBatch = shader->createBatch(gameCam.get(), 1024);
+		auto textBatch = shader->createBatch(textCam.get(), 1024);
 
 		bgBatch->addPriority(Tex::getTexture(prio));
 		addBatch("bg", bgBatch);
 		addBatch("spr", spriteBatch);
+		addBatch("txt", textBatch);
 		bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(picture));
 		spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(spriteSheet));
+		textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(fonts));
 
 	} catch (const YAML::BadFile &e) {
 		throw std::runtime_error(std::string("Could not open room file: ") + e.what());

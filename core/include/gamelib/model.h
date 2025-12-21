@@ -173,6 +173,8 @@ private:
 	glm::vec4 _texBounds;
 };
 
+
+
 class QuadModelPal : public QuadModelBase<VertexTexturePalette> {
 public:
 	QuadModelPal(IBatch* b, const QuadInfo& info)
