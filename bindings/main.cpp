@@ -17,12 +17,14 @@
 #include "gamelib/shapes/rect.h"
 #include "gamelib/playercontroller2d.h"
 #include "gamelib/npccontroller2d.h"
-
+#include "gamelib/script.h"
 #include "gamelib/collisionengine.h"
 #include "gamelib/follow.h"
 #include "gamelib/quadstaticbatch.h"
 #include "gamelib/agi/agiroom.h"
 #include "gamelib/agi/agiobject.h"
+#include "gamelib/agi/agiactions.h"
+
 
 namespace py = pybind11;
 
@@ -229,6 +231,7 @@ PYBIND11_MODULE(gamelib, mainModule) {
 			.def_static("instance", &Game::instance, py::return_value_policy::reference)
 			.def("getShader", &Game::getShader, py::arg("id"), py::return_value_policy::reference)
 			.def("init", &Game::init, py::arg("homeDir"))
+			.def("room", &Game::getCurrentRoom, py::return_value_policy::reference)
 			.def("setRoomFactory", &Game::setRoomFactory, py::arg("factory"), py::keep_alive<1, 2>())
 			.def("run", &Game::run);
 
@@ -250,6 +253,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 
 	py::class_<IModel, std::shared_ptr<IModel>>(mainModule, "IModel")
+		.def("setOnLoopEnd", [](IModel& model, py::function f) {
+			model.setOnLoopEnd([f] () { f(); });
+		})
 		.def_property("animation", &IModel::getAnimation,
 			&IModel::setAnimation);
 
@@ -260,6 +266,7 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<StaticModel<VertexColor, LinePrimitive>,
 			IModel, std::shared_ptr<StaticModel<VertexColor, LinePrimitive>>>(mainModule, "LineColorModel")
 			.def(py::init<IBatch*>(), py::arg("batch"));
+
 
 	py::class_<TileGrid, IModel, std::shared_ptr<TileGrid>>(mainModule, "TileGrid")
 		.def(py::init<IBatch*, const std::string&>(), py::arg("batch"), py::arg("data"));
@@ -282,13 +289,23 @@ PYBIND11_MODULE(gamelib, mainModule) {
 				self.setClearColor(glm::ivec3{r, g, b});
 			}, py::arg("r"), py::arg("g"), py::arg("b"));
 
-	py::class_<agi::AGIContext, std::shared_ptr<agi::AGIContext>>(modAGI, "AGIContext")
-		.def(py::init<const std::string&>(), py::arg("gameDir"));
+//	py::class_<agi::AGIContext, std::shared_ptr<agi::AGIContext>>(modAGI, "AGIContext")
+//		.def(py::init<const std::string&>(), py::arg("gameDir"));
 
 	py::class_<agi::AGIRoom, Room, std::shared_ptr<agi::AGIRoom>>(modAGI, "Room")
-		.def(py::init<const std::string&, std::shared_ptr<agi::AGIContext>>(), py::arg("id"), py::arg("context"))
+		.def(py::init<const std::string&>(), py::arg("id"))
 		.def("addObject", &agi::AGIRoom::addObject)
-		.def_property_readonly("id", &agi::AGIRoom::getId);
+		.def("rmObject", &agi::AGIRoom::rmObject, py::arg("objId"))
+		.def("getObject", &agi::AGIRoom::getObject, py::arg("objId"), py::return_value_policy::reference)
+		.def("print", &agi::AGIRoom::print)
+		.def("showObj", &agi::AGIRoom::showObject, py::arg("view"), py::arg("msg"))
+		.def("addSaid", [] (agi::AGIRoom &self, const std::vector<std::string>& words, py::function f) {
+			self.addSaid(words, [f]() {
+				f();
+			});
+		}, py::arg("phrase"), py::arg("scriptId"))
+		.def_property_readonly("id", &agi::AGIRoom::getId)
+		.def("play", &agi::AGIRoom::play, py::arg("script"));
 
 
 	py::class_<Camera, std::shared_ptr<Camera>>(mainModule, "Camera")
@@ -366,11 +383,13 @@ PYBIND11_MODULE(gamelib, mainModule) {
 		.def(py::init<>())
 		.def("add", &Node::add, py::arg("child"))
 		.def("addComponent", &Node::addComponent, py::arg("component"))
+		.def("getPosition", &Node::getWorldPosition)
 		.def("getModel", &Node::getModel, py::return_value_policy::reference)
 		.def("setModel", &Node::setModel, py::arg("model"))
 		.def("setPosition", &Node::setPosition)
 		.def("setScale", &Node::setScale, py::arg("scale"))
-		.def("setMatrix", &Node::setModelMatrix, py::arg("matrix"));
+		.def("setMatrix", &Node::setModelMatrix, py::arg("matrix"))
+		.def("remove", &Node::remove);
 
 	py::class_<Text, Node, std::shared_ptr<Text>>(mainModule, "Text")
 		.def(py::init<IBatch*, const std::string&, const std::string&, int, HAlign, float, Anchor>(),
@@ -379,13 +398,22 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 
 	py::class_<agi::AGIObject, Node, std::shared_ptr<agi::AGIObject>>(modAGI, "Object")
-			.def(py::init<int, int, float>(), py::arg("x"), py::arg("y"), py::arg("speed"))
-			.def("setCallback", [](agi::AGIObject& object, int id, py::function f) {
-				object.setCallback(id, [f] (int x, int y) -> int {
-					py::gil_scoped_acquire gil;
-					return f(x, y).cast<int>();
-				});
+		.def(py::init<const std::string&, int, int>(), py::arg("id"), py::arg("x"), py::arg("y"))
+		.def("reposition", &agi::AGIObject::reposition, py::arg("x"), py::arg("y"))
+		.def("setCallback", [](agi::AGIObject& object, int id, py::function f) {
+			object.setCallback(id, [f] (agi::AGIObject* object, int x, int y) -> int {
+				py::gil_scoped_acquire gil;
+				return f(object, x, y).cast<int>();
 			});
+		});
+
+	py::class_<agi::AGICharacter, agi::AGIObject, std::shared_ptr<agi::AGICharacter>>(modAGI, "Character")
+		.def("suspendMovement", &agi::AGICharacter::suspendMovement, py::arg("suspend"))
+		.def("addToInventory", &agi::AGICharacter::addToInventory, py::arg("itemId"), py::arg("count") = 1)
+		.def("has", &agi::AGICharacter::has, py::arg("itemId"));
+
+	py::class_<agi::AGIPlayableCharacter, agi::AGICharacter, std::shared_ptr<agi::AGIPlayableCharacter>>(modAGI, "PlayableCharacter")
+		.def(py::init<const std::string&, int, int, float>(), py::arg("id"), py::arg("x"), py::arg("y"), py::arg("speed"));
 
 
 	py::class_<Controller2D, Component, std::shared_ptr<Controller2D>>(mainModule, "Controller2D");
@@ -425,4 +453,18 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<SpatialHashingCollisionEngine, ICollisionEngine, std::shared_ptr<SpatialHashingCollisionEngine>>(mainModule, "CollisionEngine")
 		.def(py::init<float>(), py::arg("cellSize"));
 
+
+	py::class_<Action, std::shared_ptr<Action>>(mainModule, "Action");
+
+	py::class_<Script, std::shared_ptr<Script>>(mainModule, "Script")
+		.def(py::init<const std::string&>(), py::arg("id") ="")
+		.def("setLoop", &Script::setLoop)
+		.def("add", &Script::addAction, py::arg("id"), py::arg("action"), py::arg("after") = std::vector<int>());
+
+
+	py::class_<agi::SetModel, Action, std::shared_ptr<agi::SetModel>>(modAGI, "SetModel")
+		.def(py::init<const std::string&, const std::string&>(), py::arg("objectId"), py::arg("modelId"));
+
+	py::class_<agi::Print, Action, std::shared_ptr<agi::Print>>(modAGI, "Print")
+		.def(py::init<const std::string&>(), py::arg("message"));
 }

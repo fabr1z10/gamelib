@@ -5,13 +5,21 @@
 
 using namespace agi;
 
-AGIObject::AGIObject(int x, int y, float speed) : Node(), _direction(0), _speed(speed) {
+AGIObject::AGIObject(const std::string& id, int x, int y) : Node(), _id(id) {
 	_room = dynamic_cast<agi::AGIRoom*>(Game::instance().getCurrentRoom());
 	this->setPosition(glm::vec3(x, y, 0));
-	//adjustPriority();
-	_animationMap = { {0, ""}, {1, "0"}, {2, "1"}, {4, "3"}, {5, "0"}, {6, "1"}, {8, "2"}, {9, "0"}, {10, "1"} };
+}
+
+void AGIObject::reposition(int x, int y) {
+	this->setPosition(glm::vec3(x, y, 0));
+	adjustPriority();
+}
+
+AGICharacter::AGICharacter(const std::string& id, int x, int y, float speed) : AGIObject(id, x, y), _direction(0), _speed(speed) {
 
 }
+
+
 
 
 void AGIObject::adjustPriority() {
@@ -20,19 +28,49 @@ void AGIObject::adjustPriority() {
 	this->setPosition(glm::vec3(pos.x, pos.y, z));
 }
 
-void AGIObject::animate() {
-	auto it = _animationMap.find(_direction);
-	if (it != _animationMap.end()) {
-		if (it->second.empty()) {
-			_model->setUpdate(false);
-		} else {
+void AGICharacter::animate() {
+	if (_suspendMovement) return;
+	if ((_direction & 0x0C) == 0) {
+		_model->setUpdate(false);
+		return;
+	} else {
+		auto it = _animationMap.find(_direction);
+		if (it != _animationMap.end()) {
 			_model->setUpdate(true);
 			_model->setAnimation(it->second);
 		}
-		return;
-	} else {
-
 	}
+}
+
+void AGICharacter::setModel(std::shared_ptr<IModel> model) {
+	Node::setModel(model);
+	bool hasLeft = model->hasAnimation("1");
+	bool hasUp = model->hasAnimation("3");
+	bool hasDown = model->hasAnimation("2");
+	_animationMap = {
+		{0x00, "0"},
+		{0x01, hasLeft ? "1" : "0"},
+		{0x02, "0"},
+		{0x03, hasLeft ? "1" : "0"},
+		{0x04, "0"},						// Moving right
+		{0x05, hasLeft ? "1" : "0"},		// Moving left
+		{0x06, "0"},						// Moving right
+		{0x07, hasLeft ? "1" : "0"},		// Moving left
+		{0x08, hasUp ? "3" : "0"},			// Moving up, last facing right
+		{0x09, hasUp ? "3" : hasLeft ? "1": "0"},			// Moving up, last facing left
+		{0x0A, hasDown ? "2" : "0"},
+		{0x0B, hasDown ? "2" : hasLeft ? "1": "0"},		// Moving down, last facing left
+		{0x0C, "0"},						// Moving up & right
+		{0x0D, hasLeft ? "1" : "0"},		// Moving up & left
+		{0x0E, "0"},						// Moving down & right
+		{0x0F, hasLeft ? "1" : "0"},		// Moving down & left
+	};
+	auto it = _animationMap.find(_direction);
+	if (it != _animationMap.end()) {
+		_model->setUpdate(true);
+		_model->setAnimation(it->second);
+	}
+
 }
 
 bool AGIObject::checkPixel(int x, int y) {
@@ -41,21 +79,39 @@ bool AGIObject::checkPixel(int x, int y) {
 	if (color == 0) return false;
 	auto cb = _callbacks.find(color);
 	if (cb != _callbacks.end()) {
-		int canGo = cb->second(x, y);
+		int canGo = cb->second(this, x, y);
 		if (canGo != 0) return false;
 	}
 	return true;
 
 }
 
-void AGIObject::move(int delta) {
-	if (_direction == 0) return;
+int AGICharacter::has(const std::string &item) const {
+	auto it = _inventory.find(item);
+	if (it != _inventory.end()) {
+		return it->second;
+	} else {
+		return 0;
+	}
+}
+
+void AGICharacter::addToInventory(const std::string item, int qty) {
+	if (qty == 0) {
+		_inventory.erase(item);
+		return;
+	}
+	_inventory[item] = qty;
+}
+
+void AGICharacter::move(int delta) {
+	if ((_direction & 0x0C) == 0) return;
+	//if (_direction == 0) return;
 	glm::vec3 pos = getWorldPosition();
-	std::cout << pos.x << ", " << pos.y << "\n";
+	//std::cout << pos.x << ", " << pos.y << "\n";
 	int x0 = (int) pos.x;
 	int y0 = (int) pos.y;
-	int dx = _direction & 0x01 ? 1 : (_direction & 0x02 ? -1 : 0);
-	int dy = _direction & 0x04 ? 1 : (_direction & 0x08 ? -1 : 0);
+	int dx = (_direction & 0x04) ? (_direction & 0x01 ? -1 : 1) : 0;
+	int dy = (_direction & 0x08) ? (_direction & 0x02 ? -1 : 1) : 0;
 	int i = 0;
 	bool moved= false;
 	bool allowX = (dx != 0);
@@ -87,50 +143,40 @@ void AGIObject::move(int delta) {
 			}
 		}
 	}
-	if (moved) {
+	if (moved && !_suspendMovement) {
 		pos = glm::vec3(cx, cy, pos.z);
 		setPosition(pos);
 		adjustPriority();
 	}
 }
 
-void AGIObject::customUpdate(double) {
+int AGIPlayableCharacter::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
+	if (_suspendMovement) return 0;
+
+	if (action== GLFW_PRESS) {
+		if (key == GLFW_KEY_RIGHT) {
+			_direction &= 0xFE;		/// set LSB to 0
+		} else if (key == GLFW_KEY_LEFT) {
+			_direction |= 0x01;		/// set LSB to 1
+		} else if (key == GLFW_KEY_UP) {
+			_direction &= 0xFD;		/// set bit 1 to 0
+		} else if (key == GLFW_KEY_DOWN) {
+			_direction |= 0x02;		/// set bit 1 to 1
+		}
+	}
+}
+void AGIPlayableCharacter::customUpdate(double) {
+	if (_suspendMovement) return;
+	_direction &= 0xF3; // clear movement bits
 	auto* window = Game::instance().getWindow();
 	auto upDown = glfwGetKey(window, GLFW_KEY_UP);
 	auto downDown = glfwGetKey(window, GLFW_KEY_DOWN);
 	auto leftDown = glfwGetKey(window, GLFW_KEY_LEFT);
 	auto rightDown = glfwGetKey(window, GLFW_KEY_RIGHT);
-	_direction = 0;
-	if (upDown != downDown) {
-		_direction |= upDown ? 4 : 8;
-	}
-	if (leftDown != rightDown) {
-		_direction |= rightDown ? 1 : 2;
-	}
-
-	//bool moved{false};
-
+	_direction |= (leftDown || rightDown) ? 0x04 : 0x00;
+	_direction |= (upDown || downDown) ? 0x08 : 0x00;
 	move(_speed);
-//	glm::vec3 pos = getWorldPosition();
-//	if (_direction & 0x03) {
-//		// before moving, check control image!
-//		auto nx = (int) (pos.x + _speed * ((_direction & 0x01) ? 1 : -1));
-//		auto ny = (int) pos.y;
-//		int color = _room->test(nx, ny);
-//
-//		std::cout << "Testing move to (" << nx << "," << ny << ") = color " << color << std::endl;
-//
-//		pos.x += _speed * ((_direction & 0x01) ? 1 : -1);
-//		moved = true;
-//	}
-//	if (_direction & 0x0C) {
-//		auto nx = (int) pos.x;
-//		auto ny = (int) pos.y +  _speed * ((_direction & 0x04) ? 1 : -1);
-//		int color = _room->test(nx, ny);
-//		std::cout << "Testing move to (" << nx << "," << ny << ") = color " << color << std::endl;
-//		pos.y += _speed * ((_direction & 0x04) ? 1 : -1);
-//		moved = true;
-//	}
+	std::cout << " Dir: " << (int)_direction << "\n";
 	animate();
 }
 

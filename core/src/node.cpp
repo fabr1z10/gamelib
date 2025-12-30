@@ -4,8 +4,14 @@
 #include <glm/gtx/transform.hpp>
 
 Node::Node() : _parent(nullptr), _modelMatrix(1.0f), _worldMatrix(1.0f), _toBeRemoved(false), _flipX(1.f),
-	_scale(1.f), _position(0.f, 0.f, 0.f) {
+	_scale(1.f), _position(0.f, 0.f, 0.f), _active(true) {
 	updateModelMatrix();
+}
+
+void Node::setActive(bool value) {
+	_active = value;
+	for (auto& c : _components) c->setActive(value);
+	for (auto& c : _children) c->setActive(value);
 }
 
 void Node::updateModelMatrix() {
@@ -103,11 +109,14 @@ void Node::setModelMatrix(const Matrix &t) {
 
 void Node::setModel(std::shared_ptr<IModel> model) {
 	_model = model;
-	_model->setOwner(this);
-	_model->refresh();
+	if (_model != nullptr) {
+		_model->setOwner(this);
+		_model->refresh();
+	}
 }
 
 void Node::update(double dt) {
+	if (!_active) return;
 	auto shouldRemove = [] (const std::shared_ptr<Node>& node) {
 		return node->_toBeRemoved;
 	};

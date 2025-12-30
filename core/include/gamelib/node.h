@@ -18,7 +18,7 @@ public:
 	Node();
 
 	// setters
-	void setPosition(glm::vec3);
+	virtual void setPosition(glm::vec3);
 
 	void setFlipX(bool flip);
 
@@ -57,7 +57,7 @@ public:
 
 	void setModelMatrix(const Matrix& t);
 
-	void setModel(std::shared_ptr<IModel> model);
+	virtual void setModel(std::shared_ptr<IModel> model);
 
 
 	IModel* getModel() const { return _model.get(); }
@@ -70,7 +70,7 @@ public:
 
 	void unregisterObserver(NodeObserver*);
 
-
+	void setActive(bool);
 protected:
 	void updateModelMatrix();
 	glm::vec3 _position;
@@ -86,5 +86,6 @@ protected:
 	glm::mat4 _modelMatrix;
 	glm::mat4 _worldMatrix;
 	std::vector<NodeObserver*> _observers;
+	bool _active;
 };
 

@@ -32,19 +32,32 @@ public:
 
 	virtual void setAnimation(const std::string&) {}
 
+	virtual bool hasAnimation(const std::string&) { return false; }
+
 	std::string getAnimation() { return _animation; }
 
 	void setOwner(Node*);
 
 	void setUpdate(bool);
+
+	glm::vec2 getSize() const;
+
+	void setOnLoopEnd(const std::function<void()>& callback);
 protected:
 	std::string _animation;
 	Node* _owner = nullptr;
 	bool _update = true;
+	glm::vec2 _size;
+	std::function<void()> _onLoopEnd = nullptr;
+
 };
 
 inline void IModel::setOwner(Node * node) {
 	_owner = node;
+}
+
+inline glm::vec2 IModel::getSize() const {
+	return _size;
 }
 
 
@@ -83,6 +96,36 @@ protected:
 	std::vector<int> _primitives;
 };
 
+class TriangleModel : public Model<VertexColor, TrianglePrimitive> {
+public:
+	TriangleModel(IBatch *b, const std::vector<glm::vec2> &points, const glm::vec4 color)
+			: Model<VertexColor, TrianglePrimitive>(b), _points(points), _color(color) {
+		this->allocate(points.size() / 3);
+		this->refresh();
+	}
+	void refresh() override {
+		size_t u = _points.size();
+		auto t = this->getWorldTransform();
+
+		for (size_t i = 0; i < _points.size() - (_closed ? 0 : 1); i+=3) {
+			auto p0 = t.position + t.scale * glm::vec3(t.flipX * _points[i].x, _points[i].y, 0);
+			auto p1 = t.position + t.scale * glm::vec3(t.flipX * _points[(i + 1)].x, _points[(i+1)].y, 0);
+			auto p2 = t.position + t.scale * glm::vec3(t.flipX * _points[(i + 2)].x, _points[(i+2)].y, 0);
+			VertexColor *v = this->_vertices[i/3];
+			v[0].position = p0;
+			v[0].color = _color;
+			v[1].position = p1;
+			v[1].color = _color;
+			v[2].position = p2;
+			v[2].color = _color;
+		}
+	}
+
+private:
+	std::vector<glm::vec2> _points;
+	glm::vec4 _color;
+	bool _closed;
+};
 
 class LineModel : public Model<VertexColor, LinePrimitive> {
 public:
@@ -203,14 +246,20 @@ public:
 		this->allocate(1);
 	}
 
+
+
 	void update() override {
 		if (!this->_update) return;
 		const Frame& frame = _spriteInfo.getFrame(this->_animation, _frame);
 		_ticks++;
 		if (_ticks >= frame.ticks) {
 			_ticks = 0;
-			_frame = _spriteInfo.next(this->_animation,  _frame);
+			bool loopEnd = false;
+			_frame = _spriteInfo.next(this->_animation, _frame, loopEnd);
 			this->refresh();
+			if (IModel::_onLoopEnd && loopEnd) {
+				IModel::_onLoopEnd();
+			}
 		}
 	}
 
@@ -221,6 +270,9 @@ public:
 			_ticks = 0;
 			this->refresh();
 		}
+	}
+	bool hasAnimation(const std::string& anim) override {
+		return _spriteInfo.hasAnimation(anim);
 	}
 
 	void refresh() override {

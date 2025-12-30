@@ -44,9 +44,11 @@ public:
 
 	void addAnimation(const std::string& id, const Animation& anim);
 
+	bool hasAnimation(const std::string& id) const;
+
 	const Frame& getFrame(const std::string& animId, int frameIndex) const;
 
-	int next(const std::string& animId, int currentFrame) const;
+	int next(const std::string& animId, int currentFrame, bool& loopEnd) const;
 
 	std::string getDefaultAnimation() const;
 private:
@@ -54,6 +56,10 @@ private:
 
 	std::unordered_map<std::string, Animation> _animations;
 };
+
+inline bool SpriteInfo::hasAnimation(const std::string &id) const {
+	return _animations.count(id) > 0;
+}
 
 inline std::string SpriteInfo::getDefaultAnimation() const {
 	return _defaultAnimation;

@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include "gamelib/batch.h"
+#include "gamelib/scheduler.h"
 
 class Node;
 class ICollisionEngine;
@@ -43,6 +44,15 @@ public:
 	ICollisionEngine* getCollisionEngine() const;
 
 	void addCollisionEngine(std::shared_ptr<ICollisionEngine>);
+
+	void close();
+
+	void play(std::shared_ptr<Script> script);
+
+	void pause(bool value);
+protected:
+	bool _paused;
+
 private:
 	glm::vec3 _clearColor;
 	bool _complete = false;
@@ -54,6 +64,7 @@ private:
 	std::unordered_set<IShader*> _shadersForStaticRendering;
 	GLuint _fb, _color, _depth;
 	std::shared_ptr<ICollisionEngine> _collisionEngine;
+	std::shared_ptr<Scheduler> _scheduler;
 };
 
 inline bool Room::isComplete() const {
@@ -67,4 +78,6 @@ inline std::shared_ptr<Node> Room::getRootNode() {
 inline ICollisionEngine *Room::getCollisionEngine() const {
 	return _collisionEngine.get();
 }
-
+inline void Room::close() {
+	_complete= true;
+}

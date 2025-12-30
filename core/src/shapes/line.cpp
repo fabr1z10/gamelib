@@ -95,9 +95,9 @@ bool Line::isInside(glm::vec2 P) const {
 }
 
 
-// mode is ignored for line and polyline
-std::shared_ptr<IModel> Line::makeModel(IBatch* batch) {
+// modeltype is ignored for lines
+std::shared_ptr<IModel> Line::makeModel(IBatch* batch, glm::vec4 color, ModelType) {
 	std::vector<glm::vec2> points {_A, _B};
-	return std::make_shared<LineModel>(batch, points, glm::vec4(1.f), false);
+	return std::make_shared<LineModel>(batch, points, color, false);
 }
 

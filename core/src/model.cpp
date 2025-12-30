@@ -9,6 +9,10 @@ glm::vec3 IModel::getWorldPosition() const {
 	}
 }
 
+void IModel::setOnLoopEnd(const std::function<void()> &callback) {
+	_onLoopEnd = callback;
+}
+
 Transform IModel::getWorldTransform() const {
 	if (_owner) {
 		return _owner->getWorldTransform();

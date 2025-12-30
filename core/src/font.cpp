@@ -12,17 +12,18 @@ std::shared_ptr<Font> Font::makeFont(const YAML::Node &node, SpriteSheet *batch)
 	}
 }
 
-std::shared_ptr<IModel> GenericFont::buildModel(IBatch *, const std::vector<std::string>&) const {
+std::shared_ptr<IModel> GenericFont::buildModel(IBatch *, const std::vector<std::string>&, int pal) const {
 	return nullptr;
 }
 
-std::shared_ptr<IModel> MonospacedFont::buildModel(IBatch* batch, const std::vector<std::string>& text) const {
+std::shared_ptr<IModel> MonospacedFont::buildModel(IBatch* batch, const std::vector<std::string>& text, int pal) const {
 	size_t height = text.size();
 	size_t width = text.front().size();
 	for (size_t i = 0; i< text.size(); ++i) {
 		width = std::max(width, text[i].size());
 	}
 	std::stringstream stream;
+	stream << "[p=" << pal << "] ";
 	for (const auto& row : text) {
 		auto s32 = Font::getString32(row);
 		int cw = 0;
@@ -32,7 +33,7 @@ std::shared_ptr<IModel> MonospacedFont::buildModel(IBatch* batch, const std::vec
 			cw++;
 		}
 		if (cw < width) {
-			for (size_t j = 0; j < cw - width; j++) {
+			for (size_t j = 0; j <width-cw; j++) {
 				stream << "_ ";
 			}
 		}

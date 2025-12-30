@@ -26,7 +26,7 @@ public:
 
 	int getPrimitiveId();
 
-	void releasePrimitiveId(int);
+	virtual void releasePrimitiveId(int);
 
 	virtual const std::type_info& vertexType() const = 0;
 

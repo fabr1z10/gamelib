@@ -27,7 +27,7 @@ void Collider::start() {
 	engine->addCollider(this);
 
 	if (dbgBatch != nullptr) {
-		auto model = getShape()->makeModel(dbgBatch);
+		auto model = getShape()->makeModel(dbgBatch, glm::vec4(1.f), ModelType::WIREFRAME);
 		auto node = std::make_shared<Node>();
 		node->setModel(model);
 		_node->add(node);

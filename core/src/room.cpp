@@ -7,7 +7,7 @@
 #include "gamelib/shaders/basic_shaders.h"
 
 
-Room::Room() : _clearColor(0.0f, 0.0f, 0.0f) {
+Room::Room() : _clearColor(0.0f, 0.0f, 0.0f), _paused(false) {
 	_rootNode = std::make_shared<Node>();
 	_blitShader = std::make_shared<IShader>(
 			gamelib::shaders::blit_vertex, gamelib::shaders::blit_fragment, "2f2f");
@@ -60,6 +60,9 @@ Room::Room() : _clearColor(0.0f, 0.0f, 0.0f) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	_scheduler = std::make_shared<Scheduler>();
+
 }
 
 
@@ -146,7 +149,10 @@ Camera *Room::getCamera(const std::string &key) {
 }
 
 void Room::update(double dt) {
-	_rootNode->update(dt);
+	if (!_paused) {
+		_scheduler->update(dt);
+		_rootNode->update(dt);
+	}
 }
 
 void Room::addCollisionEngine(std::shared_ptr<ICollisionEngine> engine) {
@@ -155,4 +161,13 @@ void Room::addCollisionEngine(std::shared_ptr<ICollisionEngine> engine) {
 
 void Room::cleanup() {
 	_rootNode = nullptr;
+}
+
+void Room::play(std::shared_ptr<Script> script) {
+	_scheduler->play(script);
+}
+
+void Room::pause(bool value) {
+	_paused = value;
+	getRootNode()->setActive(!value);
 }

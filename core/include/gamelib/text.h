@@ -22,13 +22,15 @@ enum class Anchor {
 class Text : public Node {
 public:
 	Text(IBatch* batch, const std::string& font, const std::string& text, int palette,
-		 HAlign align, float width = 0.f, Anchor anchor = Anchor::TOP_LEFT);
+		 HAlign align, int width = 0, Anchor anchor = Anchor::TOP_LEFT);
 
 	void updateText(const std::string&);
 
 	std::string getText() const;
 
 	glm::vec2 getSize() const;
+
+	void setPosition(glm::vec3 pos);
 private:
 	std::vector<std::string> splitIntoRowsByWords(const std::string& text, size_t n);
 
@@ -38,13 +40,13 @@ private:
 		int indexEnd;
 		float length;
 	};
-	float _width;
+	int _width;
 	float _lineHeight;
 	const Font* _font;
 	int _palette;
 	std::string _palId;
 	glm::vec2 _size;
-	glm::vec3 _offset;
+	//glm::vec3 _offset;
 	int _lines;
 	int _paletteIndex;
 	HAlign _hAlign;
@@ -54,6 +56,8 @@ private:
 	//Color _color;
 	//QuadBatchPalette* _batch;
 	IBatch* _batch;
+	glm::vec2 _offset;
+	static std::unordered_map<Anchor, glm::vec2> _anchorMap;
 
 };
 

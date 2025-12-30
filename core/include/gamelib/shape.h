@@ -25,7 +25,7 @@ public:
 			float length,
 			Axis axis) const = 0;
 
-	virtual std::shared_ptr<IModel> makeModel(IBatch*) = 0;
+	virtual std::shared_ptr<IModel> makeModel(IBatch*, glm::vec4 color, ModelType) = 0;
 
 	virtual bool isInside(glm::vec2) const = 0;
 

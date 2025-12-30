@@ -9,7 +9,8 @@ void SpriteInfo::addAnimation(const std::string&id, const Animation &anim) {
 	_animations[id] = anim;
 }
 
-int SpriteInfo::next(const std::string &animId, int currentFrame) const {
+int SpriteInfo::next(const std::string &animId, int currentFrame, bool& loopEnd) const {
+	loopEnd = false;
 	try {
 		const Animation& anim = _animations.at(animId);
 		int nextFrame = currentFrame + 1;
@@ -18,6 +19,7 @@ int SpriteInfo::next(const std::string &animId, int currentFrame) const {
 				nextFrame = anim.frames.size() - 1;
 			} else {
 				nextFrame = anim.loopIndex;
+				loopEnd = true;
 			}
 		}
 		return nextFrame;

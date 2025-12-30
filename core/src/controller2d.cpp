@@ -42,7 +42,7 @@ void Controller2D::start() {
 
 	if (dbgBatch != nullptr) {
 		auto shape = std::make_shared<shapes::Rect>(_width, _height, _anchor);
-		auto model = shape->makeModel(dbgBatch);
+		auto model = shape->makeModel(dbgBatch, glm::vec4(1.f), ModelType::WIREFRAME);
 		auto node = std::make_shared<Node>();
 		node->setModel(model);
 		_node->add(node);

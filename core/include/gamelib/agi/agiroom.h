@@ -4,7 +4,10 @@
 #include "gamelib/room.h"
 #include "gamelib/keylistener.h"
 #include "gamelib/agi/priority.h"
+#include "gamelib/agi/agiparser.h"
 #include "gamelib/tex.h"
+#include "gamelib/text.h"
+#include "gamelib/shape.h"
 
 namespace agi {
 
@@ -24,14 +27,18 @@ namespace agi {
 
 	class AGIContext {
 	public:
-		AGIContext(const std::string& contextFile);
-		// object 0 is ego!
-		std::unordered_map<std::string, ObjectInfo> objects;
+		static AGIContext& instance();
+
+		std::string getString(const std::string& id);
+	private:
+		AGIContext();
+
+		std::unordered_map<std::string, std::string> _strings;
 	};
 
 	class AGIRoom : public Room, public KeyListener {
 	public:
-		AGIRoom(const std::string& id, std::shared_ptr<AGIContext>);//int id, int roomHeight, const std::string& bg, const std::string& view, PriorityMode mode);
+		AGIRoom(const std::string& id);//int id, int roomHeight, const std::string& bg, const std::string& view, PriorityMode mode);
 
 		int keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) override;
 
@@ -44,14 +51,45 @@ namespace agi {
 		std::string getId() const;
 
 		void addObject(std::shared_ptr<agi::AGIObject>);
+
+		void rmObject(const std::string&);
+
+		agi::AGIObject* getObject(const std::string& id);
+
+		std::shared_ptr<IModel> getModel(const std::string& id);
+
+
+		void addSaid(const std::vector<std::string>& words, const std::function<void()>& callback);
+
+		void print(const std::string&);
+
+		void printMessage(const std::string& msg);
+
+		void showObject(const std::string& view, const std::string& msg);
+
+		void addRect(float x, float y, float z, int width, int height, glm::vec4 color, ModelType, Node* parent);
 	private:
+		std::shared_ptr<Node> createMessage(const std::string&);
+
+		void updateCommandText();
 		std::string _roomId;
 		int _roomHeight;
 		int _gameWidth;
 		int _gameHeight;
-		std::shared_ptr<AGIContext> _agi;
+		AGIContext& _agi;
 		std::shared_ptr<PriorityCalculator> _priorityCalculator;
 		std::shared_ptr<Tex> _controlImage;
+		std::string _command;
+		std::string _cursor;
+		std::string _prompt;
+		Text* _commandText;
+		int _pauseKey;
+
+		std::shared_ptr<AGIParser> _parser;
+		int _msgPaddingX = 10;
+		int _msgPaddingY = 5;
+		Node* _msgNode = nullptr;
+		std::unordered_map<std::string, agi::AGIObject*> _objectMap;
 	};
 
 	inline int AGIRoom::getRoomHeight() const {

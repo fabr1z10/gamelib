@@ -37,6 +37,11 @@ ShaderRegistry::ShaderRegistry() {
 		return std::make_shared<Shader<VertexColor, LinePrimitive, DynamicBatch<VertexColor, LinePrimitive>>>(
 				gamelib::shaders::color_vertex, gamelib::shaders::color_fragment);
 	};
+
+	_shaderBuilders["triangle_color"] = [this] () {
+		return std::make_shared<Shader<VertexColor, TrianglePrimitive, DynamicBatch<VertexColor, TrianglePrimitive>>>(
+				gamelib::shaders::color_vertex, gamelib::shaders::color_fragment);
+	};
 //
 //	_shaderBuilders["skeletal"] = [this] () {
 //		return std::make_shared<Shader<VertexSkeletal, TrianglePrimitive>>(

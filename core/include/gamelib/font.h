@@ -27,7 +27,7 @@ public:
 	static std::u32string getString32(const std::string&);
 
 	// TODO create a model
-	virtual std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const = 0;
+	virtual std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&, int pal) const = 0;
 
 	static std::shared_ptr<Font> makeFont(const YAML::Node& node, SpriteSheet* b);
 protected:
@@ -47,7 +47,7 @@ public:
 
 	const CharInfo& getCharInfo(char32_t c) const;
 
-	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const override;
+	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&, int) const override;
 
 private:
 	std::unordered_map<char32_t, CharInfo> m_info;
@@ -63,7 +63,7 @@ class MonospacedFont : public Font {
 public:
 	MonospacedFont(const YAML::Node& node, SpriteSheet*);
 
-	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&) const override;
+	std::shared_ptr<IModel> buildModel(IBatch*, const std::vector<std::string>&, int) const override;
 
 private:
 	std::unordered_map<char32_t, int> _info;

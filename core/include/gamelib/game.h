@@ -47,6 +47,7 @@ private:
 	std::string _homeDir;
 	std::unordered_set<KeyListener*> _keyboardListeners;
 	//std::unordered_set<MouseListener*> m_mouseListeners;
+	bool _endRoom;
 };
 
 inline glm::vec4 Game::getWindowViewport() const {

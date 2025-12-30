@@ -21,6 +21,7 @@ void TileGrid::parseDescription() {
 	std::istringstream ss(_description);
 	std::string token;
 
+	int defaultPalette = 0;
 	while (ss >> token) {
 		if (token == "|") {
 			if (currentRow.empty()) {
@@ -34,8 +35,20 @@ void TileGrid::parseDescription() {
 				throw std::runtime_error("Non-rectangular tile grid.");
 			}
 			currentRow.clear();
+		} else if (token[0] == '[') {
+			std::string props = token.substr(1, token.size()-1);
+			std::istringstream ps(props);
+			std::string p;
+			while (std::getline(ps, p, ',')) {
+				if (p.empty()) continue;
+				if (p[0]=='p') {
+					auto eq = p.find('=');
+					defaultPalette = std::stoi(p.substr(eq+1));
+				}
+			}
 		} else {
 			Tile t;
+			t.palette = defaultPalette;
 			if (token == EMPTY_TOKEN) {
 				t.index = EMPTY_INDEX;
 			} else {
@@ -81,6 +94,7 @@ void TileGrid::parseDescription() {
 		for (auto& tile : row)
 			_tiles.push_back(tile);
 	}
+	_size = glm::vec2(_width, _height) * (float)(_batch->getSpriteSheet()->getTileSize());
 }
 
 void TileGrid::refresh() {

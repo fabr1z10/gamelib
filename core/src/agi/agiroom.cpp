@@ -8,14 +8,26 @@
 //#include <yaml-cpp/yaml.h>
 #include "gamelib/yaml_extension.h"
 #include <yaml-cpp/node/convert.h>
+#include "gamelib/text.h"
+#include "gamelib/shapes/rect.h"
 
 using namespace agi;
 
-AGIContext::AGIContext(const std::string& contextFile) {
+AGIContext &AGIContext::instance() {
+	static AGIContext instance;
+	return instance;
+}
+
+std::string AGIContext::getString(const std::string &id) {
+	return _strings.at(id);
+}
+
+AGIContext::AGIContext() {
 	try {
-		YAML::Node contextData = YAML::LoadFile(contextFile);
-		for (const auto& item : contextData["objects"]) {
-			objects[item.first.as<std::string>()] = item.second.as<agi::ObjectInfo>();
+		YAML::Node contextData = YAML::LoadFile("strings.yaml");
+
+		for (const auto& item : contextData) {
+			_strings[item.first.as<std::string>()] = item.second.as<std::string>();
 		}
 	} catch (const YAML::BadFile &e) {
 		throw std::runtime_error(std::string("Could not open AGI context file: ") + e.what());
@@ -28,7 +40,12 @@ AGIContext::AGIContext(const std::string& contextFile) {
 	//objects.push_back(ObjectInfo());
 }
 
-AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context) : Room(), _agi(context) {//int id, int roomHeight,
+
+
+AGIRoom::AGIRoom(const std::string& roomId) : Room(), _agi(AGIContext::instance()),
+	_pauseKey(GLFW_KEY_F1) {//int id, int roomHeight,
+	_cursor = "_";
+	_prompt = ">";
 	auto slashIndex = roomId.find_last_of('/');
 	_roomId = roomId.substr(slashIndex + 1);
 	std::string fileName = roomId.substr(0, slashIndex) + ".yaml";
@@ -52,6 +69,7 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 		auto ctrl = roomData["bg"]["control"].as<std::string>();
 		auto spriteSheet = roomData["spritesheet"].as<std::string>();
 		auto fonts = roomData["fonts"].as<std::string>();
+		auto wordsFile = roomData["words"].as<std::string>();
 
 		_controlImage = std::make_shared<Tex>();
 		_controlImage->keepCPUCopy(true);
@@ -69,10 +87,13 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 
 		auto textCam = std::make_shared<OrthoCamera>(320, 200, 0.f, 1.f, glm::vec4(0, 0, 320, 200));
 		textCam->setBounds(glm::vec3(160, 100, -100), glm::vec3(160, 100, 100));
+
 		addCamera("text", textCam);
 
 		// create shader for sprites
 		auto shader = Game::instance().getShader("sprite_pal");
+		auto lineShader = Game::instance().getShader("line_color");
+		auto triShader = Game::instance().getShader("triangle_color");
 
 		// create shader for background
 		auto agiShader = Game::instance().getShader("agi");
@@ -80,14 +101,20 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 		auto bgBatch = std::dynamic_pointer_cast<AGIBatch<VertexTexturePalette, QuadPrimitive>>(agiShader->createBatch(gameCam.get(), 1024));
 		auto spriteBatch = shader->createBatch(gameCam.get(), 1024);
 		auto textBatch = shader->createBatch(textCam.get(), 1024);
+		auto lineBatch = lineShader->createBatch(textCam.get(), 4096);
+		auto triBatch = triShader->createBatch(textCam.get(), 4096);
+
 
 		bgBatch->addPriority(Tex::getTexture(prio));
 		addBatch("bg", bgBatch);
 		addBatch("spr", spriteBatch);
 		addBatch("txt", textBatch);
+		addBatch("line", lineBatch);
+		addBatch("tri", triBatch);
 		bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(picture));
 		spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(spriteSheet));
 		textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(fonts));
+		_parser = std::make_shared<AGITokenParser>(this, wordsFile);
 
 	} catch (const YAML::BadFile &e) {
 		throw std::runtime_error(std::string("Could not open room file: ") + e.what());
@@ -96,33 +123,8 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 	} catch (const std::exception &e) {
 		throw std::runtime_error(std::string("Error loading room: ") + e.what());
 	}
-	return;
 
-//	_roomHeight = 168; // TODO: read from config
-//	std::string fullName = Game::instance().getHomeDir() + "/" + filename;
-//
-//	auto image = YAML::read<std::string>(config, "image");
-//	//const std::string &bg,
-//	//const st
-//	//const std::string &view,
-//	//PriorityMode priorityMode) : Room(), _id(id), _roomHeight(roomHeight) {
-//
-//
-//
-//	switch (priorityMode) {
-//		case PRIORITY_BASIC:
-//			_priorityCalculator = std::make_shared<BasicPriorityCalculator>(_roomHeight);
-//			break;
-//		case PRIORITY_AGI:
-//			_priorityCalculator = std::make_shared<AGIPriorityCalculator>();
-//			break;
-//		default:
-//			_priorityCalculator = std::make_shared<BasicPriorityCalculator>(_roomHeight);
-//			break;
-//	}
-//
-
-
+	// create parser
 
 
 
@@ -131,7 +133,61 @@ AGIRoom::AGIRoom(const std::string& roomId, std::shared_ptr<AGIContext> context)
 }
 
 int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
-	return 0;
+	if (!_paused) {
+		bool shift = (mods & GLFW_MOD_SHIFT) || (mods & GLFW_MOD_CAPS_LOCK);
+		if (action == GLFW_PRESS) {
+			if (key == GLFW_KEY_F10) {
+				this->close();
+				return 0;
+			}
+			if (key == _pauseKey) {
+				pause(!_paused);
+				return 0;
+			}
+			if (key == GLFW_KEY_ENTER) {
+				std::string c(_command);
+				_command.clear();
+				updateCommandText();
+				_parser->parse(c);
+				// TODO parseCommand(c);
+				return 0;
+			}
+			if (key == GLFW_KEY_BACKSPACE) {
+				if (_command.size() > 0) {
+					_command.pop_back();
+					updateCommandText();
+
+				} else {
+					return 0;
+				}
+			} else {
+				if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z) {
+					if (!shift) {
+						key += 0x20;
+					}
+					_command += char(key);
+					updateCommandText();
+
+				} else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9 || key == GLFW_KEY_SPACE) {
+					_command += char(key);
+					updateCommandText();
+
+				}
+
+			}
+		}
+	} else {
+		if (action == GLFW_PRESS) {
+			if (key == _pauseKey || key == GLFW_KEY_ENTER) {
+				if (_msgNode != nullptr) {
+					_msgNode->remove();
+					_msgNode = nullptr;
+				}
+				pause(!_paused);
+				return 0;
+			}
+		}
+	}
 }
 
 int AGIRoom::test(int x, int y) {
@@ -142,7 +198,25 @@ int AGIRoom::test(int x, int y) {
 void AGIRoom::addObject(std::shared_ptr<agi::AGIObject> node) {
 	node->setPriorityCalculator(_priorityCalculator);
 	this->getRootNode()->add(node);
+	_objectMap[node->getId()] = node.get();
+}
 
+void AGIRoom::rmObject(const std::string & id) {
+	_objectMap.at(id)->remove();
+	_objectMap.erase(id);
+}
+
+agi::AGIObject *AGIRoom::getObject(const std::string &id) {
+	return _objectMap.at(id);
+}
+
+std::shared_ptr<IModel> AGIRoom::getModel(const std::string &id) {
+	return getBatch("spr")->getModel(id);
+}
+
+void AGIRoom::updateCommandText() {
+	auto cmd = _prompt + _command + _cursor;
+	_commandText->updateText(cmd);
 }
 
 void AGIRoom::initialize() {
@@ -153,6 +227,12 @@ void AGIRoom::initialize() {
 	node->setModel(model);
 	this->getRootNode()->add(node);
 
+	// add command text
+	auto text = std::make_shared<Text>(getBatch("txt"), "sierra", "", 0, HAlign::LEFT, 40, Anchor::TOP_LEFT);
+	text->setPosition(glm::vec3(0.f, 24.f, 0.f));
+	this->getRootNode()->add(text);
+	_commandText = text.get();
+	updateCommandText();
 	// adding objects
 /*	auto spriteBatch = getBatch("spr");
 	for (const auto& [key, objInfo] : _agi->objects) {
@@ -166,3 +246,77 @@ void AGIRoom::initialize() {
 	}*/
 }
 
+void AGIRoom::addSaid(const std::vector<std::string> &words, const std::function<void()> &callback) {
+	_parser->addSaid(words, callback);
+}
+
+void AGIRoom::addRect(float x, float y, float z, int width, int height, glm::vec4 color, ModelType mtype, Node* parent) {
+	auto shape = std::make_shared<shapes::Rect>(width, height);
+	auto model = shape->makeModel(mtype == ModelType::WIREFRAME ? getBatch("line") : getBatch("tri"), color, mtype);
+	auto node = std::make_shared<Node>();
+	node->setPosition(glm::vec3(x, y, z));
+	node->setModel(model);
+	parent->add(node);
+}
+
+std::shared_ptr<Node> AGIRoom::createMessage(const std::string& msg) {
+	auto messageNode = std::make_shared<Node>();
+
+	auto text = std::make_shared<Text>(getBatch("txt"), "sierra", msg, 1 /* TODO MAKE IT CONFIGURABLE */,
+		HAlign::LEFT, 30, Anchor::CENTER);
+	auto size = text->getSize();
+	text->setPosition(glm::vec3(160, 100, 0));
+
+	messageNode->add(text);
+	addRect(
+			160.f - size.x * 0.5f - _msgPaddingX,
+			100.f - size.y * 0.5f - _msgPaddingY,
+			-0.01f,
+			size.x + 2 * _msgPaddingX,
+			size.y + 2 * _msgPaddingY,
+			glm::vec4(1.f),
+			ModelType::SOLID,
+			messageNode.get());
+	addRect(
+			160.f - size.x * 0.5f - 8.f,
+			100.f - size.y * 0.5f - 4.f,
+			-0.f,
+			size.x + 2 * 8, size.y + 2 * 4,
+			glm::vec4(170/255.f, 0.f, 0.f, 1.f),
+			ModelType::WIREFRAME,
+			messageNode.get());
+	addRect(
+			160.f - size.x * 0.5f - 7.f,
+			100.f - size.y * 0.5f - 4.f,
+			-0.f,
+			size.x + 2 * 7, size.y + 2 * 4,
+			glm::vec4(170/255.f, 0.f, 0.f, 1.f),
+			ModelType::WIREFRAME,
+			messageNode.get());
+	return messageNode;
+}
+
+void AGIRoom::print(const std::string & id) {
+	auto msg = _agi.getString(id);
+	printMessage(msg);
+}
+
+void AGIRoom::printMessage(const std::string &msg) {
+	auto messageNode = createMessage(msg);
+	getRootNode()->add(messageNode);
+	_msgNode = messageNode.get();
+	pause(true);
+}
+
+void AGIRoom::showObject(const std::string &view, const std::string &id) {
+	auto msg = _agi.getString(id);
+
+	auto messageNode = createMessage(msg);
+	auto img = std::make_shared<Node>();
+	img->setModel(getBatch("spr")->getModel(view));
+	img->setPosition(glm::vec3(80, 0, 0));
+	messageNode->add(img);
+	getRootNode()->add(messageNode);
+	_msgNode = messageNode.get();
+	pause(true);
+}

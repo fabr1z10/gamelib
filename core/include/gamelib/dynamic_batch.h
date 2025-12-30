@@ -16,6 +16,13 @@ public:
 		_dynamic = true;
 	}
 
+	void releasePrimitiveId(int id) override {
+		IBatch::releasePrimitiveId(id);
+		for (size_t v = 0; v < PRIMITIVE::verticesPerPrimitive; ++v) {
+			_vertices[id * PRIMITIVE::verticesPerPrimitive + v] = VERTEX(); // reset first vertex to zero
+		}
+	}
+
 	// returns the start address of the i-th primitive's vertex data
 	VERTEX* getAddress(int i) {
 		return &_vertices[i * PRIMITIVE::verticesPerPrimitive];

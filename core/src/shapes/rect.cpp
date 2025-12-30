@@ -79,12 +79,16 @@ bool Rect::isInside(glm::vec2 P) const {
 			P.y >= 0.f && P.y <= _size.y);
 }
 
-std::shared_ptr<IModel> Rect::makeModel(IBatch * batch) {
-	std::vector<glm::vec2> points {
-		-_anchor,
-		-_anchor + glm::vec2(_size.x, 0.f),
-		-_anchor + glm::vec2(_size.x, _size.y),
-		-_anchor + glm::vec2(0.f, _size.y)};
-
-	return std::make_shared<LineModel>(batch, points, glm::vec4(1.f), true);
+std::shared_ptr<IModel> Rect::makeModel(IBatch * batch, glm::vec4 color, ModelType modelType) {
+	glm::vec2 bl = -_anchor;
+	glm::vec2 br = -_anchor + glm::vec2(_size.x, 0.f);
+	glm::vec2 tr = -_anchor + glm::vec2(_size.x, _size.y);
+	glm::vec2 tl = -_anchor + glm::vec2(0.f, _size.y);
+	if (modelType == ModelType::WIREFRAME) {
+		std::vector<glm::vec2> points{ bl, br, tr, tl};
+		return std::make_shared<LineModel>(batch, points, color, true);
+	} else {
+		std::vector<glm::vec2> points {bl, br, tl, tr, tl, br};
+		return std::make_shared<TriangleModel>(batch, points, color);
+	}
 }

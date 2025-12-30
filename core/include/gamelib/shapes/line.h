@@ -13,7 +13,7 @@ namespace shapes {
 
 		RaycastResult raycastAxis(glm::vec2 origin, float length, Axis axis) const override;
 
-		std::shared_ptr<IModel> makeModel(IBatch*) override;
+		std::shared_ptr<IModel> makeModel(IBatch*, glm::vec4, ModelType) override;
 
 		bool isInside(glm::vec2) const override;
 	private:

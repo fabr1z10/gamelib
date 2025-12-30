@@ -2,34 +2,61 @@
 #include "gamelib/text.h"
 #include "gamelib/spritesheet.h"
 #include "gamelib/font.h"
+#include "gamelib/model.h"
 
+std::unordered_map<Anchor, glm::vec2> Text::_anchorMap = {
+	{Anchor::TOP_LEFT, glm::vec2(0.f, 0.f)},
+	{Anchor::TOP, glm::vec2(0.5f, 0.f)},
+	{Anchor::TOP_RIGHT, glm::vec2(1.f, 0.f)},
+	{Anchor::LEFT, glm::vec2(0.f, 0.5f)},
+	{Anchor::CENTER, glm::vec2(0.5f, 0.5f)},
+	{Anchor::RIGHT, glm::vec2(1.f, 0.5f)},
+	{Anchor::BOTTOM_LEFT, glm::vec2(0.f, 1.f)},
+	{Anchor::BOTTOM, glm::vec2(0.5f, 1.f)},
+	{Anchor::BOTTOM_RIGHT, glm::vec2(1.f, 1.f)}
+};
 
-
-std::vector<std::string> Text::splitIntoRowsByWords(const std::string& text, size_t n) {
-	std::vector<std::string> rows;
+std::vector<std::string> Text::splitIntoRowsByWords(const std::string& text, std::size_t n)
+{
+	std::vector<std::string> lines;
 	std::istringstream iss(text);
 	std::string word;
-	std::string currentLine;
+	std::string current;
 
 	while (iss >> word) {
-		if (currentLine.empty()) {
-			// first word in the line
-			currentLine = word;
-		} else if (currentLine.size() + 1 + word.size() <= n) {
-			// can fit this word in current line
-			currentLine += " " + word;
-		} else {
-			// cannot fit, push current line and start new
-			rows.push_back(currentLine);
-			currentLine = word;
+		// Word longer than max width → split it
+		if (word.size() > n) {
+			// Flush current line if needed
+			if (!current.empty()) {
+				lines.push_back(current);
+				current.clear();
+			}
+
+			// Split the long word
+			for (std::size_t i = 0; i < word.size(); i += n) {
+				lines.push_back(word.substr(i, n));
+			}
+		}
+		else {
+			// Try to add word to current line
+			if (current.empty()) {
+				current = word;
+			}
+			else if (current.size() + 1 + word.size() <= n) {
+				current += " " + word;
+			}
+			else {
+				lines.push_back(current);
+				current = word;
+			}
 		}
 	}
 
-	// push the last line
-	if (!currentLine.empty())
-		rows.push_back(currentLine);
+	if (!current.empty()) {
+		lines.push_back(current);
+	}
 
-	return rows;
+	return lines;
 }
 
 //Text::Text(const std::string& font, const std::string &text, Color color, HAlign align, float width, Vec2 anchor) : Node(),
@@ -44,7 +71,7 @@ std::vector<std::string> Text::splitIntoRowsByWords(const std::string& text, siz
 //
 //}
 Text::Text(IBatch* batch, const std::string& font, const std::string &text, int palette,
-	HAlign align, float width, Anchor anchor) : Node(), _batch(batch), _palette(palette), _hAlign(align), _width(width),
+	HAlign align, int width, Anchor anchor) : Node(), _batch(batch), _palette(palette), _hAlign(align), _width(width),
 	_anchor(anchor), _font(nullptr) {
 
 	_font = batch->getSpriteSheet()->getFont(font);
@@ -53,7 +80,14 @@ Text::Text(IBatch* batch, const std::string& font, const std::string &text, int 
 
 }
 
+void Text::setPosition(glm::vec3 pos) {
+	Node::setPosition(pos + glm::vec3(_offset, 0.f));
+}
 void Text::updateText(const std::string & text) {
+	if (text.empty()) {
+		setModel(nullptr);
+		return;
+	}
 	// split string into multiple rows if necessary
 	std::string fmtString;
 	std::vector<std::string> lines;
@@ -63,8 +97,11 @@ void Text::updateText(const std::string & text) {
 	} else {
 		lines.push_back(text);
 	}
-	auto model = _font->buildModel(_batch, lines);
-
+	auto model = _font->buildModel(_batch, lines, _palette);
+	// TODO set position based on ANCHOR!
+	_size = model->getSize();
+	glm::vec2 offset = _anchorMap.at(_anchor);
+	_offset = glm::vec2(-offset.x * _size.x, offset.y * _size.y);
 	setModel(model);
 
 //	_text = text;
