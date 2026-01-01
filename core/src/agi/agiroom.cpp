@@ -191,6 +191,11 @@ int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mo
 }
 
 int AGIRoom::test(int x, int y) {
+	auto size = _controlImage->getSize();
+	if (x < 0 || x >= size.x ||
+		y < 0 || y >= size.y) {
+		return 0;
+	}
 	int color = _controlImage->getIndex(x, _controlImage->getSize()[1]-y);
 	return color;
 }

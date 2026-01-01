@@ -24,6 +24,7 @@
 #include "gamelib/agi/agiroom.h"
 #include "gamelib/agi/agiobject.h"
 #include "gamelib/agi/agiactions.h"
+#include "gamelib/agi/agistrategy.h"
 
 
 namespace py = pybind11;
@@ -400,6 +401,7 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<agi::AGIObject, Node, std::shared_ptr<agi::AGIObject>>(modAGI, "Object")
 		.def(py::init<const std::string&, int, int>(), py::arg("id"), py::arg("x"), py::arg("y"))
 		.def("reposition", &agi::AGIObject::reposition, py::arg("x"), py::arg("y"))
+		.def("addBlocked", &agi::AGIObject::addBlocked, py::arg("color"))
 		.def("setCallback", [](agi::AGIObject& object, int id, py::function f) {
 			object.setCallback(id, [f] (agi::AGIObject* object, int x, int y) -> int {
 				py::gil_scoped_acquire gil;
@@ -415,6 +417,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<agi::AGIPlayableCharacter, agi::AGICharacter, std::shared_ptr<agi::AGIPlayableCharacter>>(modAGI, "PlayableCharacter")
 		.def(py::init<const std::string&, int, int, float>(), py::arg("id"), py::arg("x"), py::arg("y"), py::arg("speed"));
 
+	py::class_<agi::AGINPC, agi::AGICharacter, std::shared_ptr<agi::AGINPC>>(modAGI, "NPC")
+		.def(py::init<const std::string&, int, int, float>(), py::arg("id"), py::arg("x"), py::arg("y"), py::arg("speed"))
+		.def("setStrategy", &agi::AGINPC::setStrategy, py::arg("strategy"));
 
 	py::class_<Controller2D, Component, std::shared_ptr<Controller2D>>(mainModule, "Controller2D");
 
@@ -456,6 +461,11 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 	py::class_<Action, std::shared_ptr<Action>>(mainModule, "Action");
 
+	py::class_<agi::NPCStrategy, std::shared_ptr<agi::NPCStrategy>>(modAGI, "NPCStrategy");
+
+	py::class_<agi::Wander, agi::NPCStrategy, std::shared_ptr<agi::Wander>>(modAGI, "Wander")
+		.def(py::init<>());
+
 	py::class_<Script, std::shared_ptr<Script>>(mainModule, "Script")
 		.def(py::init<const std::string&>(), py::arg("id") ="")
 		.def("setLoop", &Script::setLoop)
@@ -467,4 +477,6 @@ PYBIND11_MODULE(gamelib, mainModule) {
 
 	py::class_<agi::Print, Action, std::shared_ptr<agi::Print>>(modAGI, "Print")
 		.def(py::init<const std::string&>(), py::arg("message"));
+
+
 }

@@ -73,10 +73,13 @@ void AGICharacter::setModel(std::shared_ptr<IModel> model) {
 
 }
 
+
 bool AGIObject::checkPixel(int x, int y) {
 	int color = _room->test(x, y);
-	if (color == 4) return true;
-	if (color == 0) return false;
+	if (color == 0 || (_blocked.find(color) != _blocked.end())) {
+		return false;
+	}
+	//if (color == 4) return true;
 	auto cb = _callbacks.find(color);
 	if (cb != _callbacks.end()) {
 		int canGo = cb->second(this, x, y);
@@ -103,52 +106,83 @@ void AGICharacter::addToInventory(const std::string item, int qty) {
 	_inventory[item] = qty;
 }
 
-void AGICharacter::move(int delta) {
+void AGICharacter::move() {
 	if ((_direction & 0x0C) == 0) return;
 	//if (_direction == 0) return;
 	glm::vec3 pos = getWorldPosition();
 	//std::cout << pos.x << ", " << pos.y << "\n";
-	int x0 = (int) pos.x;
-	int y0 = (int) pos.y;
+	int px0 = (int) pos.x;
+	int py0 = (int) pos.y;
 	int dx = (_direction & 0x04) ? (_direction & 0x01 ? -1 : 1) : 0;
 	int dy = (_direction & 0x08) ? (_direction & 0x02 ? -1 : 1) : 0;
-	int i = 0;
-	bool moved= false;
-	bool allowX = (dx != 0);
-	bool allowY = (dy != 0);
-	int cx = x0;
-	int cy = y0;
-	for (i = 0; i < delta; ++i) {
+	float speed = _speed;
+	if (dx != 0 && dy != 0) {
+		speed *= 0.707106f;
+	}
+	float vx = dx * speed;
+	float vy = dy * speed;
+	float x0 = pos.x;
+	float y0 = pos.y;
+	float x1 = x0 + vx;
+	float y1 = y0 + vy;
+	// start / end pixels
+	int ix = (int)std::floor(x0);
+	int iy = (int)std::floor(y0);
+	int ixEnd = (int)std::floor(x1);
+	int iyEnd = (int)std::floor(y1);
 
-//		if (allowX && allowY) {
-//			if (!checkPixel(cx + dx, cy + dy)) {
-//				allowX = allowY = false;
-//				break;
-//			}
-//		}
-		if (allowX) {
-			if (checkPixel(cx + dx, cy)) {
-				cx += dx;
-				moved = true;
- 			} else {
-				allowX = false;
-			}
-		}
-		if (allowY) {
-			if (checkPixel(cx, cy + dy)) {
-				cy += dy;
-				moved = true;
-			} else {
-				allowY = false;
-			}
+	// stepping direction
+	int stepX = (vx > 0) - (vx < 0);		// it's either 1 or -1 or 0
+	int stepY = (vy > 0) - (vy < 0);
+
+	float tMaxX, tMaxY;
+	float tDeltaX, tDeltaY;
+
+	// setup DDA
+	if (vx != 0.0f) {
+		float nextX = (stepX > 0) ? (ix + 1.0f) : (float)ix;
+		tMaxX = (nextX - x0) / vx;
+		tDeltaX = 1.0f / std::abs(vx);
+	} else {
+		tMaxX = INFINITY;
+		tDeltaX = INFINITY;
+	}
+
+	if (vy != 0.0f) {
+		float nextY = (stepY > 0) ? (iy + 1.0f) : (float)iy;
+		tMaxY = (nextY - y0) / vy;
+		tDeltaY = 1.0f / std::abs(vy);
+	} else {
+		tMaxY = INFINITY;
+		tDeltaY = INFINITY;
+	}
+
+
+	_moved = false;
+
+	// traverse pixels
+	while (ix != ixEnd || iy != iyEnd) {
+
+		if (!checkPixel(ix, iy))
+			return;   // movement blocked, stop entirely
+
+		if (tMaxX < tMaxY) {
+			tMaxX += tDeltaX;
+			ix += stepX;
+		} else {
+			tMaxY += tDeltaY;
+			iy += stepY;
 		}
 	}
-	if (moved && !_suspendMovement) {
-		pos = glm::vec3(cx, cy, pos.z);
-		setPosition(pos);
-		adjustPriority();
-	}
-}
+
+	// check final pixel
+	if (!checkPixel(ixEnd, iyEnd))
+		return;
+
+	// movement successful
+	this->setPosition(glm::vec3(x1, y1, 0.f));
+	this->adjustPriority();
+	_moved = true;}
 
 int AGIPlayableCharacter::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
 	if (_suspendMovement) return 0;
@@ -175,9 +209,20 @@ void AGIPlayableCharacter::customUpdate(double) {
 	auto rightDown = glfwGetKey(window, GLFW_KEY_RIGHT);
 	_direction |= (leftDown || rightDown) ? 0x04 : 0x00;
 	_direction |= (upDown || downDown) ? 0x08 : 0x00;
-	move(_speed);
+	move();
 	std::cout << " Dir: " << (int)_direction << "\n";
 	animate();
+}
+
+void AGINPC::customUpdate(double dt) {
+	if (_suspendMovement) return;
+	move();
+	_direction = _strategy->getNextDirection(_direction, _moved);
+	animate();
+}
+
+void AGINPC::setStrategy(std::shared_ptr<NPCStrategy> strategy) {
+	_strategy = strategy;
 }
 
 void AGIObject::setPriorityCalculator(std::shared_ptr<PriorityCalculator> pc) {
@@ -188,4 +233,8 @@ void AGIObject::setPriorityCalculator(std::shared_ptr<PriorityCalculator> pc) {
 void AGIObject::setCallback(int id, Callback callback) {
 	_callbacks[id] = callback;
 
+}
+
+void AGIObject::addBlocked(int id) {
+	_blocked.insert(id);
 }

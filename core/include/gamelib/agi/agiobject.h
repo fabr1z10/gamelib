@@ -3,9 +3,11 @@
 #include "gamelib/node.h"
 #include "gamelib/agi/priority.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <functional>
 #include "gamelib/keylistener.h"
+#include "gamelib/agi/agistrategy.h"
 
 namespace agi {
 
@@ -23,6 +25,8 @@ namespace agi {
 
 		void setCallback(int, Callback);
 
+		void addBlocked(int);
+
 		void reposition(int x, int y);
 
 		std::string getId() const;
@@ -32,7 +36,7 @@ namespace agi {
 		std::shared_ptr<PriorityCalculator> _priorityCalculator;
 		AGIRoom* _room;
 		std::unordered_map<int, Callback > _callbacks;
-
+		std::unordered_set<int> _blocked;
 	};
 
 	inline std::string AGIObject::getId() const {
@@ -45,7 +49,7 @@ namespace agi {
 
 		virtual void animate();
 
-		virtual void move(int delta);
+		virtual void move();
 
 		void suspendMovement(bool);
 
@@ -66,7 +70,7 @@ namespace agi {
 		float _speed;
 		std::unordered_map<int, std::string> _animationMap;
 		std::unordered_map<std::string, int> _inventory;
-
+		bool _moved = false;
 	};
 
 	class AGIPlayableCharacter : public AGICharacter, public KeyListener {
@@ -85,5 +89,13 @@ namespace agi {
 
 	class AGINPC : public AGICharacter {
 	public:
+		using AGICharacter::AGICharacter;
+
+		void customUpdate(double) override;
+
+		void setStrategy(std::shared_ptr<NPCStrategy> strategy);
+
+	private:
+		std::shared_ptr<NPCStrategy> _strategy;
 	};
 }
