@@ -19,8 +19,8 @@ int SpriteInfo::next(const std::string &animId, int currentFrame, bool& loopEnd)
 				nextFrame = anim.frames.size() - 1;
 			} else {
 				nextFrame = anim.loopIndex;
-				loopEnd = true;
 			}
+			loopEnd = true;
 		}
 		return nextFrame;
 	} catch (...) {

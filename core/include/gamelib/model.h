@@ -43,14 +43,21 @@ public:
 	glm::vec2 getSize() const;
 
 	void setOnLoopEnd(const std::function<void()>& callback);
+
+	int getLoopCount() const;
 protected:
 	std::string _animation;
 	Node* _owner = nullptr;
 	bool _update = true;
 	glm::vec2 _size;
 	std::function<void()> _onLoopEnd = nullptr;
+	int _loopCount = 0;
 
 };
+
+inline int IModel::getLoopCount() const {
+	return _loopCount;
+}
 
 inline void IModel::setOwner(Node * node) {
 	_owner = node;
@@ -257,8 +264,11 @@ public:
 			bool loopEnd = false;
 			_frame = _spriteInfo.next(this->_animation, _frame, loopEnd);
 			this->refresh();
-			if (IModel::_onLoopEnd && loopEnd) {
-				IModel::_onLoopEnd();
+			if (loopEnd) {
+				this->_loopCount++;
+				if (IModel::_onLoopEnd) {
+					IModel::_onLoopEnd();
+				}
 			}
 		}
 	}
@@ -268,6 +278,8 @@ public:
 			this->_animation = anim;
 			_frame = 0;
 			_ticks = 0;
+			// reset loop count
+			this->_loopCount = 0;
 			this->refresh();
 		}
 	}

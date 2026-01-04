@@ -12,11 +12,12 @@ float BasicPriorityCalculator::computeZ(glm::vec3 position) {
 }
 
 AGIPriorityCalculator::AGIPriorityCalculator() : PriorityCalculator(168), _yRanges{
-		0, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168} {
+		0, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168}, _zFront(-0.1f), _zBack(-1.f) {
 	for (size_t i = 0; i < 11; i++) {
-		_zBase[i] = -1.f + (_yRanges[i] / static_cast<float>(_roomHeight));
+		_zBase[i] = _zBack + (_yRanges[i] / static_cast<float>(_roomHeight)) * (_zFront - _zBack);
 	}
-
+	// we don't want zfront to be 0, since we want to use range [-0.1, 0] for UI elements etc.
+	// NB it's important that these numbers match those used in the shader!
 }
 /**
  *	Every Y range has a z_base which is simply - 1 + y0 / roomheight

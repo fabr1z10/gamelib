@@ -15,7 +15,8 @@ void AGIObject::reposition(int x, int y) {
 	adjustPriority();
 }
 
-AGICharacter::AGICharacter(const std::string& id, int x, int y, float speed) : AGIObject(id, x, y), _direction(0), _speed(speed) {
+AGICharacter::AGICharacter(const std::string& id, int x, int y, float speed, int direction) : AGIObject(id, x, y),
+	_direction(direction), _speed(speed) {
 
 }
 
@@ -179,6 +180,10 @@ void AGICharacter::move() {
 	if (!checkPixel(ixEnd, iyEnd))
 		return;
 
+	for (const auto& h : _hotspots) {
+		std::cout << "check " << x1 << "\n";
+		h.check(this, (int) x1, (int) y1);
+	}
 	// movement successful
 	this->setPosition(glm::vec3(x1, y1, 0.f));
 	this->adjustPriority();
@@ -199,6 +204,7 @@ int AGIPlayableCharacter::keyCallback(GLFWwindow *, int key, int scancode, int a
 		}
 	}
 }
+
 void AGIPlayableCharacter::customUpdate(double) {
 	if (_suspendMovement) return;
 	_direction &= 0xF3; // clear movement bits
@@ -210,7 +216,7 @@ void AGIPlayableCharacter::customUpdate(double) {
 	_direction |= (leftDown || rightDown) ? 0x04 : 0x00;
 	_direction |= (upDown || downDown) ? 0x08 : 0x00;
 	move();
-	std::cout << " Dir: " << (int)_direction << "\n";
+	//std::cout << " Dir: " << (int)_direction << "\n";
 	animate();
 }
 
@@ -230,9 +236,12 @@ void AGIObject::setPriorityCalculator(std::shared_ptr<PriorityCalculator> pc) {
 	adjustPriority();
 }
 
-void AGIObject::setCallback(int id, Callback callback) {
-	_callbacks[id] = callback;
+void AGIObject::setCallback(int id, agi::Callback callback) {
+	_callbacks[id] = std::move(callback);
+}
 
+void AGIObject::setRectCallback(int x0, int x1, int y0, int y1, agi::Callback callback) {
+	_hotspots.emplace_back(x0, x1, y0, y1, std::move(callback));
 }
 
 void AGIObject::addBlocked(int id) {

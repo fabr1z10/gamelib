@@ -42,94 +42,62 @@ AGIContext::AGIContext() {
 
 
 
-AGIRoom::AGIRoom(const std::string& roomId) : Room(), _agi(AGIContext::instance()),
-	_pauseKey(GLFW_KEY_F1) {//int id, int roomHeight,
+AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
+	_pauseKey(GLFW_KEY_F1) {
 	_cursor = "_";
 	_prompt = ">";
-	auto slashIndex = roomId.find_last_of('/');
-	_roomId = roomId.substr(slashIndex + 1);
-	std::string fileName = roomId.substr(0, slashIndex) + ".yaml";
-	try {
-		YAML::Node roomData = YAML::LoadFile(fileName);
-		roomData = roomData[_roomId];
-		if (!roomData) {
-			throw std::runtime_error("Cannot find room: " + _roomId + " in file: " + fileName);
-		}
-		_roomHeight = roomData["height"].as<int>();
-		auto priority = roomData["priority"].as<std::string>();
-		if (priority == "AGI") {
-			_priorityCalculator = std::make_shared<AGIPriorityCalculator>();
-		} else if (priority == "BASIC") {
-			_priorityCalculator = std::make_shared<BasicPriorityCalculator>(_roomHeight);
-		} else {
-			throw std::runtime_error("Unknown priority mode: " + priority);
-		}
-		auto picture = roomData["bg"]["picture"].as<std::string>();
-		auto prio = roomData["bg"]["priority"].as<std::string>();
-		auto ctrl = roomData["bg"]["control"].as<std::string>();
-		auto spriteSheet = roomData["spritesheet"].as<std::string>();
-		auto fonts = roomData["fonts"].as<std::string>();
-		auto wordsFile = roomData["words"].as<std::string>();
 
-		_controlImage = std::make_shared<Tex>();
-		_controlImage->keepCPUCopy(true);
-		_controlImage->load(ctrl);
+	_roomHeight = cfg.height;
 
-		// create game camera
-		_gameWidth = 160;
-		_gameHeight = 168;
-		glm::vec2 stretch(2, 1);
-		auto gameCam = std::make_shared<OrthoCamera>(_gameWidth, _gameHeight, 0.f, 1.f,
-		glm::vec4(0, 24, _gameWidth * stretch[0], _gameHeight * stretch[1]));
-		gameCam->setBounds(glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, -100.f),
-					  glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, 100.f));
-		addCamera("game", gameCam);
-
-		auto textCam = std::make_shared<OrthoCamera>(320, 200, 0.f, 1.f, glm::vec4(0, 0, 320, 200));
-		textCam->setBounds(glm::vec3(160, 100, -100), glm::vec3(160, 100, 100));
-
-		addCamera("text", textCam);
-
-		// create shader for sprites
-		auto shader = Game::instance().getShader("sprite_pal");
-		auto lineShader = Game::instance().getShader("line_color");
-		auto triShader = Game::instance().getShader("triangle_color");
-
-		// create shader for background
-		auto agiShader = Game::instance().getShader("agi");
-
-		auto bgBatch = std::dynamic_pointer_cast<AGIBatch<VertexTexturePalette, QuadPrimitive>>(agiShader->createBatch(gameCam.get(), 1024));
-		auto spriteBatch = shader->createBatch(gameCam.get(), 1024);
-		auto textBatch = shader->createBatch(textCam.get(), 1024);
-		auto lineBatch = lineShader->createBatch(textCam.get(), 4096);
-		auto triBatch = triShader->createBatch(textCam.get(), 4096);
-
-
-		bgBatch->addPriority(Tex::getTexture(prio));
-		addBatch("bg", bgBatch);
-		addBatch("spr", spriteBatch);
-		addBatch("txt", textBatch);
-		addBatch("line", lineBatch);
-		addBatch("tri", triBatch);
-		bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(picture));
-		spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(spriteSheet));
-		textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(fonts));
-		_parser = std::make_shared<AGITokenParser>(this, wordsFile);
-
-	} catch (const YAML::BadFile &e) {
-		throw std::runtime_error(std::string("Could not open room file: ") + e.what());
-	} catch (const YAML::Exception &e) {
-		throw std::runtime_error(std::string("YAML parsing error: ") + e.what());
-	} catch (const std::exception &e) {
-		throw std::runtime_error(std::string("Error loading room: ") + e.what());
+	if (cfg.priority == "AGI") {
+		_priorityCalculator = std::make_shared<AGIPriorityCalculator>();
+	} else if (cfg.priority == "BASIC") {
+		_priorityCalculator = std::make_shared<BasicPriorityCalculator>(_roomHeight);
+	} else {
+		throw std::runtime_error("Unknown priority mode: " + cfg.priority);
 	}
 
-	// create parser
+	std::cout << " -- loading control image: " << cfg.controlImage << "\n";
+	_controlImage = std::make_shared<Tex>();
+	_controlImage->keepCPUCopy(true);
+	_controlImage->load(cfg.controlImage);
 
+	// create game camera
+	_gameWidth = 160;
+	_gameHeight = _roomHeight;
+	glm::vec2 stretch(2, 1);
+	auto gameCam = std::make_shared<OrthoCamera>(_gameWidth, _gameHeight, 0.f, 1.f,
+		glm::vec4(0, 24, _gameWidth * stretch[0], _gameHeight * stretch[1]));
+	gameCam->setBounds(glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, -100.f),
+		glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, 100.f));
+	addCamera("game", gameCam);
 
+	auto textCam = std::make_shared<OrthoCamera>(320, 200, 0.f, 1.f, glm::vec4(0, 0, 320, 200));
+	textCam->setBounds(glm::vec3(160, 100, -100), glm::vec3(160, 100, 100));
+	addCamera("text", textCam);
 
+	// create shader for sprites
+	auto shader = Game::instance().getShader("sprite_pal");
+	auto lineShader = Game::instance().getShader("line_color");
+	auto triShader = Game::instance().getShader("triangle_color");
+	auto agiShader = Game::instance().getShader("agi");
 
+	auto bgBatch = std::dynamic_pointer_cast<AGIBatch<VertexTexturePalette, QuadPrimitive>>(agiShader->createBatch(gameCam.get(), 1024));
+	auto spriteBatch = shader->createBatch(gameCam.get(), 1024);
+	auto textBatch = shader->createBatch(textCam.get(), 1024);
+	auto lineBatch = lineShader->createBatch(textCam.get(), 4096);
+	auto triBatch = triShader->createBatch(textCam.get(), 4096);
 
+	bgBatch->addPriority(Tex::getTexture(cfg.priorityImage));
+	addBatch("bg", bgBatch);
+	addBatch("spr", spriteBatch);
+	addBatch("txt", textBatch);
+	addBatch("line", lineBatch);
+	addBatch("tri", triBatch);
+	bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.bgImage));
+	spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.spriteSheet));
+	textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.fontFile));
+	_parser = std::make_shared<AGITokenParser>(this, cfg.wordsFile);
 }
 
 int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {

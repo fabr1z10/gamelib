@@ -8,14 +8,36 @@
 #include <functional>
 #include "gamelib/keylistener.h"
 #include "gamelib/agi/agistrategy.h"
+#include <iostream>
 
 namespace agi {
 
 	class AGIRoom;
 
+	class AGIObject;
+
+	using Callback = std::function<int(AGIObject*, int, int)>;
+
+	class HotSpot {
+	public:
+		HotSpot(int x0, int x1, int y0, int y1, Callback cb) : _callback(cb), _x0(x0), _x1(x1), _y0(y0), _y1(y1) {}
+
+		int check(AGIObject* obj, int x, int y) const {
+			std::cout << "HotSpot check: (" << x << ", " << y << ") in ["
+					  << _x0 << "," << _x1 << "] x [" << _y0 << "," << _y1 << "]\n";
+			if (x >= _x0 && x <= _x1 && y >= _y0 && y <= _y1) {
+				_callback(obj, x, y);
+				return 1;
+			}
+			return 0;
+		}
+	private:
+		int _x0, _x1, _y0, _y1;
+		Callback _callback;
+	};
+
 	class AGIObject : public Node {
 	public:
-		using Callback = std::function<int(AGIObject*, int, int)>;
 
 		AGIObject(const std::string& id, int x, int y);
 
@@ -23,7 +45,9 @@ namespace agi {
 
 		void setPriorityCalculator(std::shared_ptr<PriorityCalculator> pc) ;
 
-		void setCallback(int, Callback);
+		void setCallback(int, agi::Callback);
+
+		void setRectCallback(int x0, int x1, int y0, int y1, agi::Callback);
 
 		void addBlocked(int);
 
@@ -35,7 +59,8 @@ namespace agi {
 		std::string _id;
 		std::shared_ptr<PriorityCalculator> _priorityCalculator;
 		AGIRoom* _room;
-		std::unordered_map<int, Callback > _callbacks;
+		std::unordered_map<int, agi::Callback> _callbacks;
+		std::vector<HotSpot> _hotspots;
 		std::unordered_set<int> _blocked;
 	};
 
@@ -45,7 +70,7 @@ namespace agi {
 
 	class AGICharacter : public AGIObject {
 	public:
-		AGICharacter(const std::string& id, int x, int y, float speed);
+		AGICharacter(const std::string& id, int x, int y, float speed, int direction);
 
 		virtual void animate();
 

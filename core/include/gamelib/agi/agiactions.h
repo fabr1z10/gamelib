@@ -3,6 +3,8 @@
 #include <string>
 #include "gamelib/action.h"
 
+class IModel;
+
 namespace agi {
 
 	class AGIRoom;
@@ -38,6 +40,20 @@ namespace agi {
 	private:
 		std::string _objectId;
 		std::string _modelId;
+	};
+
+	class Animate : public AGIAction {
+	public:
+		Animate(const std::string& objectId, const std::string& animationId, bool wait);
+
+		void start() override;
+
+		void run(double) override;
+	private:
+		std::string _objectId;
+		std::string _animationId;
+		bool _wait;
+		IModel * _model;
 	};
 
 

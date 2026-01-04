@@ -28,6 +28,8 @@ namespace agi {
 
 		float computeZ(glm::vec3 position) override;
 	private:
+		float _zFront;
+		float _zBack;
 		std::array<int, 12> _yRanges;
 		std::array<float, 12> _zBase;
 	};

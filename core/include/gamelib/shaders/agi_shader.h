@@ -37,7 +37,7 @@ namespace gamelib::shaders {
 		vec4 texColor = texelFetch(texture_palette, ivec2(int(index), TexIndex), 0);
 	    FragColor = texColor;
 	    float depth = texture(uPriorityTex, TexCoords).r;    // get z
-	    gl_FragDepth = 1.0 - depth;
+	    gl_FragDepth = 1.0 - (0.9* depth);				  // invert and scale to [0.1, 1.0]
 	}
 	)";
 

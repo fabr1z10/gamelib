@@ -36,9 +36,23 @@ namespace agi {
 		std::unordered_map<std::string, std::string> _strings;
 	};
 
+
+	struct RoomConfig {
+		int height;
+		std::string priority;
+
+		std::string controlImage;
+		std::string priorityImage;
+		std::string bgImage;
+		std::string spriteSheet;
+		std::string fontFile;
+		std::string wordsFile;
+
+	};
+
 	class AGIRoom : public Room, public KeyListener {
 	public:
-		AGIRoom(const std::string& id);//int id, int roomHeight, const std::string& bg, const std::string& view, PriorityMode mode);
+		AGIRoom(const RoomConfig& cfg);//int id, int roomHeight, const std::string& bg, const std::string& view, PriorityMode mode);
 
 		int keyCallback(GLFWwindow*, int key, int scancode, int action, int mods) override;
 
