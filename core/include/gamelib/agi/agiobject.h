@@ -8,9 +8,21 @@
 #include <functional>
 #include "gamelib/keylistener.h"
 #include "gamelib/agi/agistrategy.h"
+#include "gamelib/algo/gridgraph.h"
 #include <iostream>
 
 namespace agi {
+
+	enum CharacterDirection {
+		RIGHT 		= 0x04,
+		LEFT  		= 0x05,
+		UP    		= 0x08,
+		DOWN  		= 0x0A,
+		UP_RIGHT 	= 0x0C,
+		UP_LEFT  	= 0x0D,
+		DOWN_RIGHT 	= 0x0E,
+		DOWN_LEFT  	= 0x0F
+	};
 
 	class AGIRoom;
 
@@ -74,7 +86,7 @@ namespace agi {
 
 		virtual void animate();
 
-		virtual void move();
+		virtual void move(double);
 
 		void suspendMovement(bool);
 
@@ -84,7 +96,18 @@ namespace agi {
 
 		void setModel(std::shared_ptr<IModel> model) override;
 
+		void setDirection(uint8_t dir) { _direction = dir; }
+
+		void walkTo(Point p);
 	protected:
+		void setWalkSegment(int);
+		struct WalkSegment {
+			Point start;
+			Point end;
+			int hDir;
+			int vDir;
+			float length;
+		};
 		bool _suspendMovement = false;
 
 		// bit 0 of direction tells whether moving (1) or not (0)
@@ -96,6 +119,12 @@ namespace agi {
 		std::unordered_map<int, std::string> _animationMap;
 		std::unordered_map<std::string, int> _inventory;
 		bool _moved = false;
+		std::vector<Point> _path;
+		std::vector<WalkSegment> _segments;
+		int _segIndex = -1;
+		float _currentLength = 0.0f;
+		double _timeSinceLastUpdate = 0.0f;
+		double _updateTime = 0.1;
 	};
 
 	class AGIPlayableCharacter : public AGICharacter, public KeyListener {

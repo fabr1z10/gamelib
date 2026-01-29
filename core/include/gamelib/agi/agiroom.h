@@ -8,6 +8,8 @@
 #include "gamelib/tex.h"
 #include "gamelib/text.h"
 #include "gamelib/shape.h"
+#include "gamelib/algo/gridgraph.h"
+#include "gamelib/agi/agimouse.h"
 
 namespace agi {
 
@@ -82,6 +84,8 @@ namespace agi {
 		void showObject(const std::string& view, const std::string& msg);
 
 		void addRect(float x, float y, float z, int width, int height, glm::vec4 color, ModelType, Node* parent);
+
+		const GridGraph& getGraph() const;
 	private:
 		std::shared_ptr<Node> createMessage(const std::string&);
 
@@ -104,6 +108,8 @@ namespace agi {
 		int _msgPaddingY = 5;
 		Node* _msgNode = nullptr;
 		std::unordered_map<std::string, agi::AGIObject*> _objectMap;
+		std::unique_ptr<GridGraph> _gridGraph;
+		std::unique_ptr<agi::AGIMouse> _mouse;
 	};
 
 	inline int AGIRoom::getRoomHeight() const {
@@ -112,5 +118,9 @@ namespace agi {
 
 	inline std::string AGIRoom::getId() const {
 		return _roomId;
+	}
+
+	inline const GridGraph &AGIRoom::getGraph() const {
+		return *_gridGraph;
 	}
 }

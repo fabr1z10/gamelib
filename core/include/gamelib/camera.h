@@ -66,6 +66,9 @@ public:
 
 	glm::vec2 getSize() const;
 
+	/* Transform device coordinates into world coordinates
+	 */
+	[[nodiscard]] glm::vec2 getWorldCoordinates(glm::vec2) const;
 private:
 	glm::vec2 _orthoSize;
 };

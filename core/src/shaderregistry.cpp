@@ -28,11 +28,11 @@ ShaderRegistry::ShaderRegistry() {
 //			gamelib::shaders::color_normal_vertex, gamelib::shaders::color_normal_fragment);
 //	};
 //
-//	_shaderBuilders["quad_texture_repeat"] = [this] () {
-//		return std::make_shared<Shader<VertexTextureRepeat, QuadPrimitive>>(
-//				gamelib::shaders::texture_normal_vertex, gamelib::shaders::texture_normal_fragment);
-//	};
-//
+	_shaderBuilders["quad_texture_repeat"] = [this] () {
+		return std::make_shared<Shader<VertexTextureRepeat, QuadPrimitive, DynamicBatch<VertexTextureRepeat, QuadPrimitive>>>(
+				gamelib::shaders::texture_normal_vertex, gamelib::shaders::texture_normal_fragment);
+	};
+
 	_shaderBuilders["line_color"] = [this] () {
 		return std::make_shared<Shader<VertexColor, LinePrimitive, DynamicBatch<VertexColor, LinePrimitive>>>(
 				gamelib::shaders::color_vertex, gamelib::shaders::color_fragment);

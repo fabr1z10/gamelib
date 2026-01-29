@@ -26,7 +26,7 @@
 #include "gamelib/agi/agiactions.h"
 #include "gamelib/agi/agistrategy.h"
 #include "gamelib/actions.h"
-
+#include "gamelib/shadow.h"
 
 namespace py = pybind11;
 
@@ -444,6 +444,9 @@ PYBIND11_MODULE(gamelib, mainModule) {
 	py::class_<Controller2D, Component, std::shared_ptr<Controller2D>>(mainModule, "Controller2D");
 
 	py::class_<Collider, Component, std::shared_ptr<Collider>>(mainModule, "Collider");
+
+	py::class_<Shadow, Component, std::shared_ptr<Shadow>>(mainModule, "Shadow")
+		.def(py::init<float, float, int>(), py::arg("angle"), py::arg("scale"), py::arg("palette"));
 
 	py::class_<BasicCollider, Collider, std::shared_ptr<BasicCollider>>(mainModule, "BasicCollider")
 		.def(py::init<std::shared_ptr<Shape>, int, int, const std::string&>(), py::arg("shape"), py::arg("flag"),

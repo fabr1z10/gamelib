@@ -96,7 +96,9 @@ public:
 		}
 	}
 
-
+	IBatch* getBatch() const {
+		return _batch;
+	}
 protected:
 	Batch<VERTEX, PRIMITIVE>* _batch;
 	std::vector<VERTEX*> _vertices;
@@ -253,7 +255,13 @@ public:
 		this->allocate(1);
 	}
 
+	int getFrame() const {
+		return _frame;
+	}
 
+	const SpriteInfo& getSpriteInfo() const {
+		return _spriteInfo;
+	}
 
 	void update() override {
 		if (!this->_update) return;
@@ -350,4 +358,76 @@ public:
 private:
 
 	int _pal;
+};
+
+class ShadowModelPal : public SpriteBase<VertexTexturePalette> {
+public:
+	ShadowModelPal(IBatch*, SpriteModelPal* reference, float angle, float scale, int pal);
+
+	void setGroundY(float y) {
+		_gndY = y;
+	}
+	void update() override {
+		if (!this->_update) return;
+
+		_animation = _reference->getAnimation();
+		_frame = _reference->getFrame();
+
+	}
+
+	void refresh() override {
+		auto t = this->getWorldTransform();
+		//std::cout << t.position.x << ", " << t.position.y << ", " << t.position.z << std::endl;
+
+		//auto pos = this->getWorldPosition();
+		const Frame& frame = _spriteInfo.getFrame(this->_animation, _frame);
+		const QuadInfo& info = frame.quad;
+		// sx includes flip
+		float sx = t.scale * t.flipX;   // flipX is +1 or -1
+		float sy = t.scale;             // assume no flipY; use t.flipY if you have it
+
+		glm::vec3 groundOffset = _versor * (t.position.y - _gndY);
+		glm::vec3 bottomLeft = t.position;
+		bottomLeft.y = _gndY;
+		bottomLeft += -glm::vec3(info.anchorX * sx, info.anchorY * sy, 0.01f) + groundOffset;
+
+		auto* p = this->_vertices[0];
+		float tx0 = info.tx0;;
+		float ty0 = info.ty0;
+		float tx1 = info.tx1;;
+		float ty1 = info.ty1;
+		if (info.flipx) {
+			std::swap(tx0, tx1);
+		}
+
+		float h = info.height * sy;
+		if (info.flipy) {
+			std::swap(ty0, ty1);
+		}
+		p->position = bottomLeft;
+		p->texCoord = glm::vec2(tx0, ty1);
+		p->paletteId = _pal;
+
+		(p+1)->position = bottomLeft + glm::vec3(sx * info.width, 0, 0);
+		(p+1)->texCoord = glm::vec2(tx1, ty1);
+		(p+1)->paletteId = _pal;
+
+		(p+2)->position = bottomLeft + glm::vec3(sx * info.width, 0, 0) + _versor * h;
+		(p+2)->texCoord = glm::vec2(tx1, ty0);
+		(p+2)->paletteId = _pal;
+
+		(p+3)->position = bottomLeft + _versor*h;
+		(p+3)->texCoord = glm::vec2(tx0, ty0);
+		(p+3)->paletteId = _pal;
+
+		//this->setVertex(p + 0, bottomLeft, glm::vec2(tx0, ty1));
+		//this->setVertex(p + 1, bottomLeft + glm::vec3(sx * info.width, 0, 0), glm::vec2(tx1, ty1));
+		//this->setVertex(p + 2, bottomLeft + glm::vec3(sx * info.width, 0, 0) + _versor * h, glm::vec2(tx1, ty0));
+		//this->setVertex(p + 3, bottomLeft + _versor*h, glm::vec2(tx0, ty0));
+	}
+private:
+	SpriteModelPal* _reference;
+	glm::vec3 _versor;
+	int _pal;
+	float _gndY;
 };

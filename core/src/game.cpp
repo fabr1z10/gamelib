@@ -15,6 +15,10 @@ void Game::init(const std::string &homeDir) {
 		_homeDir = homeDir;
 		_config = std::make_unique<Config>(homeDir + "/config.yaml");
 		initGL();
+		if (_config->mouseOn()) {
+			glfwSetMouseButtonCallback(_window, mouse_button_callback);
+			glfwSetCursorPosCallback(_window, cursor_pos_callback);
+		}
 	} catch (const std::exception &e) {
 		std::cerr << "Failed to load config: " << e.what() << std::endl;
 	}
@@ -78,6 +82,7 @@ void Game::WindowResizeCallback(GLFWwindow *win, int width, int height) {
 	if (height == 0) {
 		height = 1;
 	}
+	Game::instance()._screenHeight = height;
 	auto& game = Game::instance();
 	auto* config = game.getConfig();
 	float winAspectRatio = static_cast<float>(width) / height;
@@ -173,4 +178,32 @@ void Game::registerToKeyboardEvent(KeyListener* listener) {
 
 void Game::unregisterToKeyboardEvent(KeyListener* listener) {
 	_keyboardListeners.erase(listener);
+}
+
+void Game::mouse_button_callback(GLFWwindow* win, int button, int action, int mods) {
+	for (auto &listener : Game::instance()._mouseListeners) {
+		if (listener->mouseButtonCallback(win, button, action, mods) == 0) break;
+	}
+}
+
+void Game::cursor_pos_callback(GLFWwindow * win, double xpos, double ypos) {
+	for (auto &listener : Game::instance()._mouseListeners) {
+		listener->cursorPosCallback(win, xpos, ypos);
+	}
+}
+
+void Game::registerToMouseEvent(MouseListener* listener) {
+	_mouseListeners.insert(listener);
+}
+
+void Game::unregisterToMouseEvent(MouseListener * listener) {
+	_mouseListeners.erase(listener);
+
+}
+
+glm::vec2 Game::getDeviceCoordinates(glm::vec2 s) {
+	auto deviceSize = _config->getDeviceSize();
+	float devx = (s.x - _windowViewport.x) * deviceSize.x / _windowViewport[2];
+	float devy = (_screenHeight - s.y - _windowViewport.y) * deviceSize.y / _windowViewport[3];
+	return {devx, devy};
 }

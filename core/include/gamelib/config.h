@@ -17,12 +17,15 @@ public:
 	float getDeviceAspectRatio() const;
 
 	int getDefaultTicks() const { return _defaultTicks; }
+
+	bool mouseOn() const;
 private:
 	glm::ivec2 _deviceSize;
 	glm::ivec2 _windowSize;
 	std::string _title;
 	int _defaultTicks;
 	float _deviceAspectRatio;
+	bool _mouseOn;
 };
 
 inline glm::ivec2 Config::getDeviceSize() const {
@@ -35,4 +38,8 @@ inline glm::ivec2 Config::getWindowSize() const {
 
 inline float Config::getDeviceAspectRatio() const {
 	return _deviceAspectRatio;
+}
+
+inline bool Config::mouseOn() const {
+	return _mouseOn;
 }

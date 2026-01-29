@@ -61,6 +61,7 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	_controlImage = std::make_shared<Tex>();
 	_controlImage->keepCPUCopy(true);
 	_controlImage->load(cfg.controlImage);
+	_gridGraph = std::make_unique<GridGraph>(*_controlImage);
 
 	// create game camera
 	_gameWidth = 160;
@@ -71,6 +72,11 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	gameCam->setBounds(glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, -100.f),
 		glm::vec3(_gameWidth * 0.5f, _gameHeight * 0.5f, 100.f));
 	addCamera("game", gameCam);
+
+	if (Game::instance().getConfig()->mouseOn()) {
+		_mouse = std::make_unique<AGIMouse>(this, gameCam.get());
+		Game::instance().registerToMouseEvent(_mouse.get());
+	}
 
 	auto textCam = std::make_shared<OrthoCamera>(320, 200, 0.f, 1.f, glm::vec4(0, 0, 320, 200));
 	textCam->setBounds(glm::vec3(160, 100, -100), glm::vec3(160, 100, 100));
@@ -164,7 +170,7 @@ int AGIRoom::test(int x, int y) {
 		y < 0 || y >= size.y) {
 		return 0;
 	}
-	int color = _controlImage->getIndex(x, _controlImage->getSize()[1]-y);
+	int color = _controlImage->getIndex(x, _controlImage->getSize()[1]-1-y);
 	return color;
 }
 

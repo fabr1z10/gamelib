@@ -8,6 +8,7 @@
 #include "gamelib/shaderregistry.h"
 #include "gamelib/roomfactory.h"
 #include "gamelib/keylistener.h"
+#include "gamelib/mouselistener.h"
 
 class Game {
 public:
@@ -30,9 +31,16 @@ public:
 	glm::vec4 getWindowViewport() const;
 	void registerToKeyboardEvent(KeyListener*);
 	void unregisterToKeyboardEvent(KeyListener*);
+	void registerToMouseEvent(MouseListener*);
+	void unregisterToMouseEvent(MouseListener*);
+	// transforms screen coordinate into device coordinates
+	glm::vec2 getDeviceCoordinates(glm::vec2);
+
 private:
 	static void WindowResizeCallback(GLFWwindow* win, int width, int height);
 	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void cursor_pos_callback(GLFWwindow*, double xpos, double ypos);
+	static void mouse_button_callback(GLFWwindow*, int, int, int);
 	void initGL();
 	void closeGL();
 	Game();
@@ -46,8 +54,10 @@ private:
 	std::shared_ptr<Room> _room;
 	std::string _homeDir;
 	std::unordered_set<KeyListener*> _keyboardListeners;
-	//std::unordered_set<MouseListener*> m_mouseListeners;
+	std::unordered_set<MouseListener*> _mouseListeners;
 	bool _endRoom;
+	float _screenHeight;
+
 };
 
 inline glm::vec4 Game::getWindowViewport() const {

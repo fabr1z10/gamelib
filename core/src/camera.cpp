@@ -56,6 +56,14 @@ OrthoCamera::OrthoCamera(float width, float height, float near, float far, glm::
 	_projectionMatrix = glm::ortho(-hw, hw, -hh, hh, near, far);
 }
 
+glm::vec2 OrthoCamera::getWorldCoordinates(glm::vec2 deviceCoordinates) const {
+	float xw = -_viewMatrix[3][0] - (_orthoSize.x * 0.5f) + (deviceCoordinates.x - _viewport.x) * (_orthoSize.x / _viewport[2]);
+	float yw = -_viewMatrix[3][1] - (_orthoSize.y * 0.5f) + (deviceCoordinates.y - _viewport.y) * (_orthoSize.y / _viewport[3]);
+	return glm::vec2(xw, yw);
+}
+
+
+
 PerspectiveCamera::PerspectiveCamera(glm::vec4 viewport, float fov, float near, float far) :
 	Camera(viewport), _fov(fov), _near(near), _far(far) {
 	_projectionMatrix = glm::perspective (glm::radians(_fov), (float)_viewport[2]/_viewport[3], _near, _far);

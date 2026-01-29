@@ -250,7 +250,7 @@ void Tex::load(const std::string &filename, std::vector<Palette>* palettes)
 	png_destroy_read_struct(&png, &info, nullptr);
 }
 
-uint8_t Tex::getIndex(int x, int y) {
+uint8_t Tex::getIndex(int x, int y) const {
 	if (_format != Format::INDEXED || !_hasCPUCopy)
 		throw std::runtime_error("Texture is not indexed or has no CPU copy");
 

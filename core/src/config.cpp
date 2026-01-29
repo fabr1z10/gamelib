@@ -10,6 +10,7 @@ Config::Config(const std::string &filePath) {
 		_deviceAspectRatio = static_cast<float>(_deviceSize.x) / _deviceSize.y;
 		_title = YAML::read<std::string>(config, "title","Untitled game");
 		_defaultTicks = YAML::read<int>(config, "default_ticks", 10);
+		_mouseOn = YAML::read<bool>(config, "mouse_on", false);
 		std::cout << "Device size: " << _deviceSize.x << "x" << _deviceSize.y << std::endl;
 	} catch (const YAML::BadFile& e) {
 		throw std::runtime_error(std::string("Could not open config file: ") + e.what());

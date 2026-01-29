@@ -60,9 +60,10 @@ public:
 
 	glm::ivec4 getColor(int x, int y);
 
-	uint8_t getIndex(int x, int y);
+	uint8_t getIndex(int x, int y) const;
 
 	static uint32_t packColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+
 	static uint32_t parseHexColorRGBA(const std::string& s);
 private:
 

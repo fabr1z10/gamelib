@@ -2,12 +2,15 @@
 
 #include <string>
 #include "gamelib/action.h"
+#include "gamelib/algo/gridgraph.h"
 
 class IModel;
 
 namespace agi {
 
 	class AGIRoom;
+
+	class AGICharacter;
 
 	class AGIAction : public Action {
 	public:
@@ -56,6 +59,19 @@ namespace agi {
 		IModel * _model;
 	};
 
+	class Walk : public AGIAction {
+	public:
+		Walk(const std::string& objectId, const std::vector<Point> path);
+
+		void start() override;
+
+		void run(double) override;
+	private:
+		std::string _objectId;
+		const std::vector<Point> _path;
+		AGICharacter* _object;
+		int _index;
+	};
 
 
 }
