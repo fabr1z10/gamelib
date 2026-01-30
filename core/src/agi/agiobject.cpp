@@ -268,42 +268,43 @@ void AGIPlayableCharacter::customUpdate(double dt) {
 void AGINPC::customUpdate(double dt) {
 	if (_suspendMovement) return;
 	move(dt);
-	if (!_moved) {
-		auto pos = getWorldPosition();
-		auto ix = (int)std::floor(pos.x);
-		auto iy = (int)std::floor(pos.y);
-		std::vector<CharacterDirection> dirs { RIGHT, LEFT, UP, DOWN, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT };
+//	if (!_moved) {
+//		auto pos = getWorldPosition();
+//		auto ix = (int)std::floor(pos.x);
+//		auto iy = (int)std::floor(pos.y);
+//		std::vector<CharacterDirection> dirs { RIGHT, LEFT, UP, DOWN, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT };
+//
+//		bool rightAllowed = checkPixel(ix+1, iy);
+//		bool leftAllowed = checkPixel(ix-1, iy);
+//		bool upAllowed = checkPixel(ix, iy+1);
+//		bool downAllowed = checkPixel(ix, iy-1);
+//		std::vector<bool> allowed{
+//			rightAllowed,
+//			leftAllowed,
+//			upAllowed,
+//			downAllowed,
+//			checkPixel(ix+1, iy+1) && (rightAllowed || upAllowed),
+//			checkPixel(ix-1, iy+1) && (leftAllowed || upAllowed),
+//			checkPixel(ix+1, iy-1) && (rightAllowed || downAllowed),
+//			checkPixel(ix-1, iy-1) && (leftAllowed || downAllowed)
+//		};
+//		std::vector<CharacterDirection> dd;
+//		for (size_t i = 0; i < dirs.size(); i++) {
+//			if (allowed[i]) dd.push_back(dirs[i]);
+//		}
+//
+//		_direction = dd[Random::instance().nextInt(0, dd.size())];
+//
+//
+//	}
 
-		bool rightAllowed = checkPixel(ix+1, iy);
-		bool leftAllowed = checkPixel(ix-1, iy);
-		bool upAllowed = checkPixel(ix, iy+1);
-		bool downAllowed = checkPixel(ix, iy-1);
-		std::vector<bool> allowed{
-			rightAllowed,
-			leftAllowed,
-			upAllowed,
-			downAllowed,
-			checkPixel(ix+1, iy+1) && (rightAllowed || upAllowed),
-			checkPixel(ix-1, iy+1) && (leftAllowed || upAllowed),
-			checkPixel(ix+1, iy-1) && (rightAllowed || downAllowed),
-			checkPixel(ix-1, iy-1) && (leftAllowed || downAllowed)
-		};
-		std::vector<CharacterDirection> dd;
-		for (size_t i = 0; i < dirs.size(); i++) {
-			if (allowed[i]) dd.push_back(dirs[i]);
-		}
-
-		_direction = dd[Random::instance().nextInt(0, dd.size())];
-
-
-	}
-
-	//_direction = _strategy->getNextDirection(_direction, _moved);
+	_direction = _strategy->getNextDirection(_direction, _moved);
 	animate();
 }
 
 void AGINPC::setStrategy(std::shared_ptr<NPCStrategy> strategy) {
 	_strategy = strategy;
+	_strategy->setObject(this);
 }
 
 void AGIObject::setPriorityCalculator(std::shared_ptr<PriorityCalculator> pc) {

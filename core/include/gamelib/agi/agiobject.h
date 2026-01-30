@@ -66,8 +66,10 @@ namespace agi {
 		void reposition(int x, int y);
 
 		std::string getId() const;
-	protected:
+
 		bool checkPixel(int x, int y);
+
+	protected:
 		std::string _id;
 		std::shared_ptr<PriorityCalculator> _priorityCalculator;
 		AGIRoom* _room;
