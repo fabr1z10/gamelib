@@ -161,6 +161,7 @@ void Room::addCollisionEngine(std::shared_ptr<ICollisionEngine> engine) {
 
 void Room::cleanup() {
 	_rootNode = nullptr;
+
 }
 
 void Room::play(std::shared_ptr<Script> script) {

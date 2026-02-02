@@ -1,0 +1,229 @@
+desc_dagger: Its handle is beautifully carved; the blade is bronze and very sharp!
+desc_carrot: This is one of the tastiest looking carrots you have ever seen.
+desc_golden_walnut: You proudly admire your gold walnut.
+desc_walnut: It seems to be a good, solid walnut.
+0-1: You splash around in the water for a while but seem  to have forgotten how to swim. Unfortunately, you drown.
+0-2: Where do you think it could be?
+0-3: The goat is not much for conversation.
+0-4: "Ye best be careful, young Graham.  The mystic protective spell of mine has weakened and departed."
+0-5: KQ1
+0-6: You feel a stretching sensation... Oh, you're back to your original size.
+0-7: You're too busy right now to rub the ring.
+0-8: There is no reason to do that now.
+0-9: You had the dagger and lost it.  Sorry.
+0-16: Mmmm!  There's nothing like a crisp, fresh carrot.
+0-18: You already have a carrot.
+0-19: You already ate the carrot.
+0-40: You're welcome!
+0-53: You have already opened the walnut.
+0-54: When you open the walnut, you discover the nut inside is pure gold!
+0-55: Ouch!  It would be much easier if you opened the walnut first.
+0-56: Don't do that!  This walnut is not edible since it is pure gold.
+1-1: Misfortune strikes and you have fallen into the moat. Your struggles and cries have attracted hungry alligators.  They do not want to let you go.
+1-2: King Edward's banners are waving in the strong breeze.
+1-3: This is the castle of King Edward the Benevolent.
+1-4: It looks deep and dangerous.  You can see alligators  floating in the water.
+1-5: The water in the moat is not conducive to swimming.
+1-6: They are absolutely gorgeous!
+1-7: It is a very small,  wooden barrel bridge.
+1-8: The alligators are swimming in the moat.
+1-9: There are alligators in this water.  I don't think you want to try drinking it.
+1-10: You fill the bucket with the murky water from the moat.
+1-11: There is water nearby.
+1-12: You need to get closer to the water.
+1-13: King Edward does not allow anyone to take his flowers.
+1-14: The moats slippery sides prevent you from getting out.
+1-15: What!  Are you crazy?
+1-16: You are standing outside a castle surrounded by an alligator filled moat.
+2-1: High above the castle, the flags are waving in the wind.
+2-2: King Edward the Benevolent, the mighty ruler of Daventry, lives in this castle.
+2-3: You must enter the castle through the door, and the  door is closed.
+2-4: "It's your typical moat water: murky and smelly."
+2-5: You never know what might be in there!
+2-6: It is a rather small, wooden bridge.
+2-7: These alligators have protected the castle from many a trespasser.
+2-8: They pose as immovable guards for King Edward's castle, and have frightened off numerous intruders.
+2-9: These doors are strongly built to keep out unwanted visitors.
+2-10: You can't see them from here.
+2-11: As you kneel by the edge of the moat and see just how filthy the water is, your thirst strangely leaves you.
+2-12: Although you notice the water is unclean, you fill the bucket.
+2-13: You are not close enough to any water.
+2-14: You have no container for water.
+2-15: You have been to the castle once and you may not return until your quest is complete.
+2-16: You have been to the castle once since your quest and  are not allowed to return again.
+2-17: Since the goat is with you, permission to enter the  castle is denied.
+2-18: You cannot reach the door from here.
+2-19: The door is already closed.
+2-21: Misfortune strikes and you have fallen into the moat. Your struggles and cries have attracted hungry alligators.  They do not want to let you go.
+2-22: They are absolutely gorgeous!
+2-23: King Edward does not allow anyone to take his flowers.
+2-25: The huge doors swing open slowly.
+2-26: The moats slippery sides prevent you from getting out.
+2-27: What!  Are you crazy?
+2-28: Your knock echos within the castle.  Unfortunately, no one answers.
+2-29: You are standing outside a castle surrounded by an alligator filled moat.
+55-1: The light from the oil lamp is rather dim in the dark interior of the castle.
+55-2: There is nobody in the armor.
+55-3: This is the armor of one of King Edward's knights from years ago.
+55-4: The armor is firmly mounted to the wall.
+55-5: The long marble hall has a cold, dreary feeling.
+#msg 10 You already have it.
+#msg 11 As soon as you swallow the first bite, you have this strange shrinking feeling...  It's true!  You are now no bigger than a mouse!
+#msg 12 You need to be closer to the water if you want to swim.
+#msg 13 You drain the bucket of water to quench your thirst.
+#msg 14 You open your mouth while swimming and quench your thirst.
+#msg 15 With difficulty, you fill the bucket while swimming.
+#msg 17 VERSION 2.0F
+
+#msg 20 The goat quickly eats the carrot and disappears.
+#msg 21 Now is not a good time to try and eat the mushroom.
+#msg 22 You do not have a bowl.
+#msg 23 It is not nice to tease the goat.
+#msg 24 You are not carrying it.
+#msg 25 There is no reason to drop it.
+#msg 26 You are already swimming.
+#msg 27 The water is very deep here. Without aid, it is impossible to swim under the water for any length of time.
+#msg 28 You need to be in the water to try that.
+#msg 29 You need to be in water to swim.
+#msg 30 >
+#msg 31
+#msg 32 You do not have any stew.
+#msg 33 The stew is chock full of vegetables and meat.
+#msg 34 You already have a full bowl of stew.
+#msg 35 The bowl fills with the delicious stew, but the woodcutters are unaware of it.
+#msg 36 After uttering that strange word, the bowl starts quivering and immediately fills up with a delicious, hot stew.
+#msg 37 It is very inconsiderate to eat in front of these poor, starving people.  The pains of guilt set in on you.
+#msg 38 You eat every bite of the delicious stew.
+#msg 39 OK.
+#msg 41
+#msg 42 You are dazzled by the countless supply of gold coins spilling from the magic chest.  You quickly close the chest.
+#msg 43 You are already carrying an endless supply of gold coins in the magic chest.
+#msg 44 You open the chest and admire the gold coins for a moment. You then close the chest.
+#msg 45 There is no reason to throw the dagger.
+#msg 46 You don't want the dagger anymore.
+#msg 47 You hurl the dagger at the old goat... he tries to avoid the flying dagger, but your aim is true... as the dagger strikes, he slumps to the ground... dead.
+#msg 48 You don't have any way to kill the old goat.
+#msg 49 There is no goat here.
+#msg 50 You've already killed the goat.
+#msg 51 The old goat, trotting briskly, seems happy to be with you.
+#msg 52 Seeing how much the goat likes that carrot, eating it may be hazardous to your health.
+#msg 57
+#msg 58
+#msg 59
+#msg 60 The note reads, "Sometimes it is wise to think backwards."
+#msg 61
+#msg 62
+#msg 63 Mmmm!  That Swiss cheese was as delicious as it looked.
+#msg 64
+#msg 65 The word on the bottom of the bowl says "fill".
+#msg 66 Even a small portion of the stew is very appetizing.
+#msg 67
+#msg 68 You throw one of your pebbles.
+#msg 69
+#msg 70
+#msg 71
+#msg 72
+#msg 73 This egg will be tough to crack.
+#msg 74
+#msg 75 You play a lively, toe-tapping tune on the fiddle.
+#msg 76
+#msg 77
+#msg 78 You have already opened the pouch.
+#msg 79 Cautiously, you open the pouch and see many sparkling and flashing diamonds!  Quickly, you close it again so as not to lose any.
+#msg 80
+#msg 81 You try, but being invisible makes it impossible.
+#msg 82
+#msg 83
+#msg 84 You're going to be sorry!!  These were magic beans!
+#msg 85 That is not a bad idea, but this is not a very suitable place to plant these beans.  Why don't you try it elsewhere?
+#msg 86
+#msg 87
+#msg 88 The ring is already on your finger.
+#msg 89 You slip the beautiful ring on one of your fingers.
+#msg 90 I don't know why, but you drop the magic ring.
+#msg 91 Nothing happens.
+#msg 92 When the ring disappears, you reappear!
+#msg 93 When you rub the magic ring, you mysteriously disappear, except for your footprints.
+#msg 94 You rub the magic ring but the goat seems to have a strange effect on it.
+#msg 95 With disappointment, you see that nothing happens.
+#msg 96 The magic ring is still in your pocket.  You can't rub it there.
+#msg 97 The spell to make you invisible has expired and you are once again visible to dangerous creatures, but, the ring has now disappeared.
+#msg 98 You will have to find it before you can get it.
+#msg 99 You do not have it.
+#msg 100 _
+#msg 101 You are not wearing the ring.
+#msg 102 There is no need to rub the ring as you are already invisible.
+#msg 103
+#msg 104
+#msg 105
+#msg 106
+#msg 107
+#msg 108
+#msg 109
+#msg 110
+#msg 111
+#msg 112
+#msg 113
+#msg 114
+#msg 115
+#msg 116
+#msg 117
+#msg 118
+#msg 119
+#msg 120
+#msg 121
+#msg 122
+#msg 123
+#msg 124
+#msg 125
+#msg 126
+#msg 127
+#msg 128
+#msg 129
+#msg 130
+#msg 131
+#msg 132
+#msg 133
+#msg 134
+#msg 135
+#msg 136
+#msg 137
+#msg 138
+#msg 139
+#msg 140
+#msg 141
+#msg 142
+#msg 143
+#msg 144
+#msg 145
+#msg 146
+#msg 147
+#msg 148
+#msg 149
+#msg 150 Info
+#msg 151 Help
+#msg 152 About KQ
+#msg 153 File
+#msg 154 Save Game      <F5>
+#msg 155 Restore Game   <F7>
+#msg 156 -------------------
+#msg 157 Restart Game   <F9>
+#msg 158 Pause             <Esc>
+#msg 159 Quit        <Alt Z>
+#msg 160 Game
+#msg 161 Inventory     <Tab>
+#msg 162 See Object     <F4>
+#msg 163 Sound On/Off       <F2>
+#msg 164 Action
+#msg 165 Swim  =
+#msg 166 Special
+#msg 167 Graphics Mode  <Ctrl R>
+#msg 168 Reset Joystick <Ctrl J>
+#msg 169 Speed
+#msg 170 Normal
+#msg 171 Fast
+#msg 172 Slow
+#msg 173 King's Quest was designed by Roberta Williams.
+#msg 174 Jump  0
+#msg 175 Duck  -
+#msg 176 Joystick/Mouse <Ctrl J>

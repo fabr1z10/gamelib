@@ -10,10 +10,12 @@ Game::Game() : _window(nullptr), _roomFactory(nullptr) {
 	std::cout << "Welcome to gamelib!" << std::endl;
 }
 
+
+
 void Game::init(const std::string &homeDir) {
 	try {
-		_homeDir = homeDir;
-		_config = std::make_unique<Config>(homeDir + "/config.yaml");
+		_homePath = std::filesystem::path(homeDir);
+		_config = std::make_unique<Config>(_homePath / "config.yaml");
 		initGL();
 		if (_config->mouseOn()) {
 			glfwSetMouseButtonCallback(_window, mouse_button_callback);
@@ -141,6 +143,7 @@ void Game::run() {
 
 		} while (!endRoom && !shutdown);
 		_room->cleanup();
+		_room = nullptr;
 	}
 
 }

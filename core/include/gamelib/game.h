@@ -9,6 +9,7 @@
 #include "gamelib/roomfactory.h"
 #include "gamelib/keylistener.h"
 #include "gamelib/mouselistener.h"
+#include <filesystem>
 
 class Game {
 public:
@@ -27,7 +28,7 @@ public:
 	void setRoomFactory(std::shared_ptr<IRoomFactory> factory);
 	Room* getCurrentRoom();
 	void setCurrentRoom(std::shared_ptr<Room>);
-	std::string getHomeDir() const;
+	std::filesystem::path getHomeDir() const;
 	glm::vec4 getWindowViewport() const;
 	void registerToKeyboardEvent(KeyListener*);
 	void unregisterToKeyboardEvent(KeyListener*);
@@ -57,6 +58,7 @@ private:
 	std::unordered_set<MouseListener*> _mouseListeners;
 	bool _endRoom;
 	float _screenHeight;
+	std::filesystem::path _homePath;
 
 };
 
@@ -72,7 +74,7 @@ inline GLFWwindow *Game::getWindow() const {
 	return _window;
 }
 
-inline std::string Game::getHomeDir() const {
-	return _homeDir;
+inline std::filesystem::path Game::getHomeDir() const {
+	return _homePath;
 }
 

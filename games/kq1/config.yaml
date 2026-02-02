@@ -1,0 +1,4 @@
+device_size: [320, 200]
+mouse_on: True
+words: 'assets/words.yaml'
+strings: 'assets/strings.yaml'

@@ -2,8 +2,7 @@
 #include "gamelib/game.h"
 
 File::File(const std::string & filename) : _fp(nullptr) {
-	std::string fullName = Game::instance().getHomeDir() + "/" + filename;
-	_fp = fopen(fullName.c_str(), "rb");
+	_fp = fopen(filename.c_str(), "rb");
 
 }
 

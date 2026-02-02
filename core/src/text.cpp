@@ -72,7 +72,7 @@ std::vector<std::string> Text::splitIntoRowsByWords(const std::string& text, std
 //}
 Text::Text(IBatch* batch, const std::string& font, const std::string &text, int palette,
 	HAlign align, int width, Anchor anchor) : Node(), _batch(batch), _palette(palette), _hAlign(align), _width(width),
-	_anchor(anchor), _font(nullptr) {
+	_anchor(anchor), _font(nullptr), _offset(0.f, 0.f), _size(0.f, 0.f) {
 
 	_font = batch->getSpriteSheet()->getFont(font);
 	_lineHeight = _font->getLineHeight();

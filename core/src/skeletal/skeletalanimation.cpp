@@ -4,9 +4,9 @@
 #include <yaml-cpp/yaml.h>
 
 SkeletalAnimation::SkeletalAnimation(const std::string &file) {
-	auto assetPath = Game::instance().getHomeDir() + "/assets/";
+	auto assetPath = Game::instance().getHomeDir() / "assets";
 	try {
-		YAML::Node inputData = YAML::LoadFile(assetPath + file);
+		YAML::Node inputData = YAML::LoadFile(assetPath / file);
 		auto duration = inputData["duration"].as<float>();
 		for (const auto& kf : inputData["key_frames"]) {
 			auto pct = kf["pct"].as<float>();
@@ -25,7 +25,7 @@ SkeletalAnimation::SkeletalAnimation(const std::string &file) {
 
 
 	} catch (const YAML::BadFile& e) {
-		throw std::runtime_error("SkeletalAnimation: Unable to open file " + assetPath + file);
+		throw std::runtime_error("SkeletalAnimation: Unable to open file");
 	}
 }
 

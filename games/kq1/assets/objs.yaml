@@ -1,0 +1,57 @@
+#alligator: &alligator
+#  type: npc
+#  strategy: wander
+#  view: 107
+#  speed: 100
+#  blocks: [1, 2, 4]
+state:
+  room: 1         # current room
+objects:
+  ego:      # graham!
+    type: player
+    x: 101
+    y: 76
+    room: 1
+    view: 0
+    speed: 100
+    dir: 0
+    inventory:
+      dagger: 1
+      carrot: 1
+      walnut: 1
+  r1_flags:
+    x: 5
+    y: 150
+    room: 1
+    view: 97
+#  r1_alli1:
+#    <<: *alligator
+#    x: 121
+#    y: 6
+#    room: 1
+#  r1_alli2:
+#    <<: *alligator
+#    x: 73
+#    y: 2
+#    room: 1
+#  r2_alli1:
+#    <<: *alligator
+#    x: 121
+#    y: 6
+#    room: 2
+#  r2_alli2:
+#    <<: *alligator
+#    x: 73
+#    y: 2
+#    room: 2
+#  r2_flags:
+#    x: 115
+#    y: 150
+#    room: 2
+#    view: 97
+#  r2_door:
+#    x: 105
+#    y: 47
+#    room: 2
+#    view: 9
+#    anim: closed

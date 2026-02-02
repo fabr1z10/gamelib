@@ -40,34 +40,45 @@ target_include_directories(gamelib_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/
 
 target_link_libraries(gamelib_core PUBLIC ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} glfw ${PNG_LIBRARIES} ${YAML_CPP_LIBRARIES})
 
+# build tests
+
+file(GLOB KQ1_SOURCES CONFIGURE_DEPENDS games/kq1/*.cpp)
+
+add_executable(kq1 ${KQ1_SOURCES})
+
+target_link_libraries(kq1 PRIVATE gamelib_core)
+
+set_target_properties(kq1 PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/games/kq1/bin"
+)
 # ----------------------------------------------------
 # 2️⃣ Build the Python bindings module
 # ----------------------------------------------------
-file(GLOB BINDINGS_SOURCES CONFIGURE_DEPENDS bindings/*.cpp)
-
-pybind11_add_module(gamelib ${BINDINGS_SOURCES})
-
-target_link_libraries(gamelib PRIVATE gamelib_core)
-
-# ----------------------------------------------------
-# 3️⃣ Stub generation (optional but recommended)
-# ----------------------------------------------------
-set(STUBS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/stubs")
-
-add_custom_target(generate_stubs ALL
-        COMMAND "${Python_EXECUTABLE}" -m pybind11_stubgen gamelib --output-dir "${STUBS_OUTPUT_DIR}"
-        DEPENDS gamelib
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-        COMMENT "Generating Python stubs for gamelib..."
-)
-
-
-# ----------------------------------------------------
-# 4️⃣ Install module + stubs
-# ----------------------------------------------------
-install(TARGETS gamelib COMPONENT python LIBRARY DESTINATION "${Python_SITEARCH}")
-
-
-# If stub generator produces a .pyi file:
-install(FILES "${STUBS_OUTPUT_DIR}/gamelib.pyi"
-        DESTINATION "${Python_SITEARCH}")
+#file(GLOB BINDINGS_SOURCES CONFIGURE_DEPENDS bindings/*.cpp)
+#
+#pybind11_add_module(gamelib ${BINDINGS_SOURCES})
+#
+#target_link_libraries(gamelib PRIVATE gamelib_core)
+#
+## ----------------------------------------------------
+## 3️⃣ Stub generation (optional but recommended)
+## ----------------------------------------------------
+#set(STUBS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/stubs")
+#
+#add_custom_target(generate_stubs ALL
+#        COMMAND "${Python_EXECUTABLE}" -m pybind11_stubgen gamelib --output-dir "${STUBS_OUTPUT_DIR}"
+#        DEPENDS gamelib
+#        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+#        COMMENT "Generating Python stubs for gamelib..."
+#)
+#
+#
+## ----------------------------------------------------
+## 4️⃣ Install module + stubs
+## ----------------------------------------------------
+#install(TARGETS gamelib COMPONENT python LIBRARY DESTINATION "${Python_SITEARCH}")
+#
+#
+## If stub generator produces a .pyi file:
+#install(FILES "${STUBS_OUTPUT_DIR}/gamelib.pyi"
+#        DESTINATION "${Python_SITEARCH}")

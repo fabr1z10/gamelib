@@ -48,6 +48,7 @@ bool SpriteSheet::isIndexed() const {
 
 SpriteSheet::SpriteSheet(const std::string &filename) {
 	try {
+
 		std::filesystem::path p(filename);
 		if (p.extension() == ".png") {
 			_tex = std::make_shared<Tex>();
@@ -56,8 +57,7 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 		}
 
 
-		std::string fullName = Game::instance().getHomeDir() + "/" + filename;
-		YAML::Node config = YAML::LoadFile(fullName);
+		YAML::Node config = YAML::LoadFile(p);
 		auto image = YAML::read<std::string>(config, "image");
 
 		_tileSize = config["tilesize"].as<int>(1);
@@ -84,7 +84,7 @@ SpriteSheet::SpriteSheet(const std::string &filename) {
 			}
 		}
 		_tex = std::make_shared<Tex>();
-		_tex->load(image, &_palettes);
+		_tex->load(p.parent_path() / image, &_palettes);
 		auto readQuad = [&] (const YAML::Node& node) -> QuadInfo {
 			auto quad = node.as<QuadInfo>();
 			quad.tx0 = static_cast<float>(quad.x) / _tex->getSize().x;

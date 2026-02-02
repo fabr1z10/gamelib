@@ -24,7 +24,7 @@ std::string AGIContext::getString(const std::string &id) {
 
 AGIContext::AGIContext() {
 	try {
-		YAML::Node contextData = YAML::LoadFile("strings.yaml");
+		YAML::Node contextData = YAML::LoadFile("../assets/strings.yaml");
 
 		for (const auto& item : contextData) {
 			_strings[item.first.as<std::string>()] = item.second.as<std::string>();
@@ -45,6 +45,7 @@ AGIContext::AGIContext() {
 AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	_pauseKey(GLFW_KEY_F1) {
 	_cursor = "_";
+	_command = "";
 	_prompt = ">";
 
 	_roomHeight = cfg.height;
@@ -60,7 +61,7 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	std::cout << " -- loading control image: " << cfg.controlImage << "\n";
 	_controlImage = std::make_shared<Tex>();
 	_controlImage->keepCPUCopy(true);
-	_controlImage->load(cfg.controlImage);
+	_controlImage->load(Game::instance().getHomeDir() / cfg.controlImage);
 	_gridGraph = std::make_unique<GridGraph>(*_controlImage);
 
 	// create game camera
@@ -94,16 +95,16 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	auto lineBatch = lineShader->createBatch(textCam.get(), 4096);
 	auto triBatch = triShader->createBatch(textCam.get(), 4096);
 
-	bgBatch->addPriority(Tex::getTexture(cfg.priorityImage));
+	bgBatch->addPriority(Tex::getTexture(Game::instance().getHomeDir() / cfg.priorityImage));
 	addBatch("bg", bgBatch);
 	addBatch("spr", spriteBatch);
 	addBatch("txt", textBatch);
 	addBatch("line", lineBatch);
 	addBatch("tri", triBatch);
-	bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.bgImage));
-	spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.spriteSheet));
-	textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(cfg.fontFile));
-	_parser = std::make_shared<AGITokenParser>(this, cfg.wordsFile);
+	bgBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(Game::instance().getHomeDir() / cfg.bgImage));
+	spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(Game::instance().getHomeDir() / cfg.spriteSheet));
+	textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(Game::instance().getHomeDir() / cfg.fontFile));
+	_parser = std::make_shared<AGITokenParser>(this, Game::instance().getHomeDir() / cfg.wordsFile);
 }
 
 int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
@@ -200,11 +201,13 @@ void AGIRoom::updateCommandText() {
 
 void AGIRoom::initialize() {
 	Room::initialize();
+
 	QuadInfo info(_gameWidth, _gameHeight);
 	auto model = std::make_shared<QuadModelPal>(getBatch("bg"), info);
 	auto node = std::make_shared<Node>();
 	node->setModel(model);
 	this->getRootNode()->add(node);
+
 
 	// add command text
 	auto text = std::make_shared<Text>(getBatch("txt"), "sierra", "", 0, HAlign::LEFT, 40, Anchor::TOP_LEFT);
