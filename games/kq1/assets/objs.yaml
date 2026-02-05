@@ -24,11 +24,15 @@ objects:
     y: 150
     room: 1
     view: 97
-#  r1_alli1:
-#    <<: *alligator
-#    x: 121
-#    y: 6
-#    room: 1
+  r1_alli1:
+    type: npc
+    strategy: wander
+    view: 107
+    speed: 100
+    blocks: [1, 2, 4]
+    x: 121
+    y: 6
+    room: 1
 #  r1_alli2:
 #    <<: *alligator
 #    x: 73

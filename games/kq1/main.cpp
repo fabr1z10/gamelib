@@ -5,10 +5,10 @@
 
 int main() {
 
-	auto factory = std::make_shared<RoomFactory>();
 
 	Game& g = Game::instance();
 	g.init("..");
+	auto factory = std::make_shared<RoomFactory>();
 	g.setRoomFactory(factory);
 	g.run();
 }

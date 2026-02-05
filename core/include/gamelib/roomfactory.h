@@ -7,6 +7,6 @@
 class IRoomFactory {
 public:
 	virtual ~IRoomFactory() = default;
-	virtual std::shared_ptr<Room> createRoom() = 0;
+	virtual void createRoom() = 0;
 	virtual void init(std::shared_ptr<Room>) = 0;
 };

@@ -113,8 +113,8 @@ void Game::run() {
 	bool shutdown = false;
 	while (!shutdown) {
 		if (!_roomFactory) throw std::runtime_error("No room factory set!");
-		_room = _roomFactory->createRoom();
-		_roomFactory->init(_room);
+		_roomFactory->createRoom();
+		//_roomFactory->init(_room);
 		_room->initialize();
 		bool endRoom = false;
 		// main loop

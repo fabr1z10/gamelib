@@ -1,0 +1,6 @@
+scripts:
+  - w: ['look', 'room']
+    script: |
+      msg(1-16)
+      pane bello
+      
