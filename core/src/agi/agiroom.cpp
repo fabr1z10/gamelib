@@ -5,7 +5,6 @@
 #include "gamelib/node.h"
 #include "gamelib/agi/agibatch.h"
 #include "gamelib/agi/agiobject.h"
-//#include <yaml-cpp/yaml.h>
 #include "gamelib/yaml_extension.h"
 #include <yaml-cpp/node/convert.h>
 #include "gamelib/text.h"
@@ -47,7 +46,8 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	_cursor = "_";
 	_command = "";
 	_prompt = ">";
-
+	auto path = Game::instance().getHomeDir() / "assets" / "script.gs";
+	_languageParser = std::make_unique<agi::LanguageParser>(path);
 	_roomHeight = cfg.height;
 
 	if (cfg.priority == "AGI") {
@@ -105,6 +105,14 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 	spriteBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(Game::instance().getHomeDir() / cfg.spriteSheet));
 	textBatch->addSpriteSheet(SpriteSheet::getSpriteSheet(Game::instance().getHomeDir() / cfg.fontFile));
 	_parser = std::make_shared<AGITokenParser>(this, Game::instance().getHomeDir() / cfg.wordsFile);
+}
+
+void AGIRoom::executeMacro(agi::Macro &macro) {
+	auto inst = _languageParser->expandMacro(macro);
+	// ok, now I have a list of instructions to execute. For now, I just print them, but eventually I will need to implement an instruction executor that can handle all the different types of instructions (e.g. show message, move object, etc.)
+	for (const auto &i: inst) {
+		std::cout << i;
+	}
 }
 
 int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
@@ -228,8 +236,8 @@ void AGIRoom::initialize() {
 	}*/
 }
 
-void AGIRoom::addSaid(const std::vector<std::string> &words, const std::function<void()> &callback) {
-	_parser->addSaid(words, callback);
+void AGIRoom::addSaid(const std::vector<std::string> &words, std::shared_ptr<Macro> m) {
+	_parser->addSaid(words, m);
 }
 
 void AGIRoom::addRect(float x, float y, float z, int width, int height, glm::vec4 color, ModelType mtype, Node* parent) {

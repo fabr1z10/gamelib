@@ -33,6 +33,7 @@ void RoomFactory::createRoom() {
 	}
 
 	YAML::Node roomData = YAML::LoadFile(Game::instance().getHomeDir() / roomPath / "room.yaml");
+	auto* parser = room->getLanguageParser();
 	for (const auto& item: roomData["scripts"]) {
 		auto words = item["w"].as<std::vector<std::string>>();
 		auto script = item["script"].as<std::string>();
@@ -43,7 +44,12 @@ void RoomFactory::createRoom() {
 			lines.push_back(line);
 		}
 		std::cout << "Adding script:\n";
-		for(const auto&l : lines) std::cout << l << "\n";
+		auto m = std::make_shared <agi::Macro>();
+		for(const auto&l : lines) {
+			m->addInstruction(parser->parseInstruction(l));
+		}
+		room->addSaid(words, m);
+
 		std::cout << "---\n";
 	}
 
@@ -57,7 +63,7 @@ void RoomFactory::init(std::shared_ptr<Room>) {
 RoomFactory::RoomFactory() {
 
 	// load all global stuff here!
-	_parser = std::make_unique<LanguageParser>();
+	//_parser = std::make_unique<LanguageParser>();
 
 	YAML::Node config = YAML::LoadFile("../assets/objs.yaml");
 	for (const auto& item: config["objects"]) {

@@ -38,7 +38,7 @@ AGITokenParser::AGITokenParser(AGIRoom* room, const std::string &file) : AGIPars
 	}
 }
 
-void AGITokenParser::addSaid(const std::vector<std::string> &words, const std::function<void()> &callback) {
+void AGITokenParser::addSaid(const std::vector<std::string> &words, std::shared_ptr<Macro> m) {
 	Trie* t = _parserRoot.get();
 	for (const auto& w : words) {
 		auto it = t->children.find(w);
@@ -50,7 +50,7 @@ void AGITokenParser::addSaid(const std::vector<std::string> &words, const std::f
 			t = it->second.get();
 		}
 	}
-	t->callbacks.push_back(callback);
+	t->macro = m;
 }
 
 void AGITokenParser::parse(const std::string &input) {
@@ -117,10 +117,10 @@ void AGITokenParser::parse(const std::string &input) {
 		//print("I don't understand \"" + culpritWord + "\".");
 	} else {
 		std::cout << ("Found node!\n");
-		if (!t->callbacks.empty()) {
-			for (const auto& cb : t->callbacks) {
-				cb();
-			}
+		// execute macro
+		if (t->macro != nullptr) {
+			// TODO
+			_room->executeMacro(*t->macro.get());
 		}
 	}
 

@@ -13,5 +13,5 @@ private:
 
 	std::unordered_map<std::string, int> _state;
 
-	std::unique_ptr<LanguageParser> _parser;
+	//std::unique_ptr<LanguageParser> _parser;
 };

@@ -1,10 +1,10 @@
 @sequenza
 1,0: pippa
 2,1: mappa
-3,2: *msg
+3,2: *msg(id=10)
 4,3: fine
 @msg
-1,0: print, {id}
+1,0: print({id})
 2,1: ciao bela
 3,2: *other
 @other

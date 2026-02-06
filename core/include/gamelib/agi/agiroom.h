@@ -10,6 +10,7 @@
 #include "gamelib/shape.h"
 #include "gamelib/algo/gridgraph.h"
 #include "gamelib/agi/agimouse.h"
+#include "gamelib/agi/langparser.h"
 
 namespace agi {
 
@@ -74,8 +75,9 @@ namespace agi {
 
 		std::shared_ptr<IModel> getModel(const std::string& id);
 
+		void executeMacro(Macro& macro);
 
-		void addSaid(const std::vector<std::string>& words, const std::function<void()>& callback);
+		void addSaid(const std::vector<std::string>& words, std::shared_ptr<Macro> macro);
 
 		void print(const std::string&);
 
@@ -86,6 +88,10 @@ namespace agi {
 		void addRect(float x, float y, float z, int width, int height, glm::vec4 color, ModelType, Node* parent);
 
 		const GridGraph& getGraph() const;
+
+		agi::LanguageParser* getLanguageParser() {
+			return _languageParser.get();
+		}
 	private:
 		std::shared_ptr<Node> createMessage(const std::string&);
 
@@ -110,6 +116,7 @@ namespace agi {
 		std::unordered_map<std::string, agi::AGIObject*> _objectMap;
 		std::unique_ptr<GridGraph> _gridGraph;
 		std::unique_ptr<agi::AGIMouse> _mouse;
+		std::unique_ptr<agi::LanguageParser> _languageParser;
 	};
 
 	inline int AGIRoom::getRoomHeight() const {

@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <memory>
 #include <functional>
-
+#include "gamelib/agi/langparser.h"
 
 namespace agi {
 
@@ -14,7 +14,7 @@ namespace agi {
 
 	public:
 		std::unordered_map<std::string, std::shared_ptr<Trie>> children;
-		std::vector<std::function<void()>> callbacks;
+		std::shared_ptr<Macro> macro;
 	};
 
 	class AGIParser {
@@ -25,7 +25,7 @@ namespace agi {
 
 		std::vector<std::string> splitBySpaces(const std::string &input);
 
-		virtual void addSaid(const std::vector<std::string> &words, const std::function<void()> &callback) = 0;
+		virtual void addSaid(const std::vector<std::string> &words, std::shared_ptr<Macro> m) = 0;
 
 	protected:
 		AGIRoom *_room = nullptr;
@@ -38,7 +38,7 @@ namespace agi {
 
 		void parse(const std::string &input) override;
 
-		void addSaid(const std::vector<std::string> &words, const std::function<void()> &callback) override;
+		void addSaid(const std::vector<std::string> &words, std::shared_ptr<Macro> m) override;
 
 	private:
 		std::shared_ptr<Trie> _parserRoot;
