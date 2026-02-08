@@ -109,10 +109,12 @@ AGIRoom::AGIRoom(const RoomConfig& cfg) : Room(), _agi(AGIContext::instance()),
 
 void AGIRoom::executeMacro(agi::Macro &macro) {
 	auto inst = _languageParser->expandMacro(macro);
+	auto script = _languageParser->getScript(inst);
+	this->play(script);
 	// ok, now I have a list of instructions to execute. For now, I just print them, but eventually I will need to implement an instruction executor that can handle all the different types of instructions (e.g. show message, move object, etc.)
-	for (const auto &i: inst) {
-		std::cout << i;
-	}
+	//for (const auto &i: inst) {
+	//	std::cout << i;
+	//}
 }
 
 int AGIRoom::keyCallback(GLFWwindow *, int key, int scancode, int action, int mods) {
@@ -287,7 +289,7 @@ std::shared_ptr<Node> AGIRoom::createMessage(const std::string& msg) {
 }
 
 void AGIRoom::print(const std::string & id) {
-	auto msg = _agi.getString(id);
+	auto msg =  Game::instance().getRoomFactory()->getString(id);
 	printMessage(msg);
 }
 

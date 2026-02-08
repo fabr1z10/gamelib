@@ -25,6 +25,7 @@ public:
 	const Config* getConfig() const;
 	GLFWwindow* getWindow() const;
 	IShader* getShader(const std::string& id);
+	IRoomFactory* getRoomFactory();
 	void setRoomFactory(std::shared_ptr<IRoomFactory> factory);
 	Room* getCurrentRoom();
 	void setCurrentRoom(std::shared_ptr<Room>);
@@ -78,3 +79,6 @@ inline std::filesystem::path Game::getHomeDir() const {
 	return _homePath;
 }
 
+inline IRoomFactory* Game::getRoomFactory() {
+	return _roomFactory.get();
+}

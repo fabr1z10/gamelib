@@ -1,6 +1,6 @@
 scripts:
   - w: ['look', 'room']
     script: |
-      1,0: *msg(id=1-16)
+      1,0: print(id=1-16)
       
       

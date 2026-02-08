@@ -1,7 +1,7 @@
 #include "gamelib/agi/langparser.h"
 #include "gamelib/game.h"
 #include <fstream>
-
+#include "gamelib/agi/agiactions.h"
 #include <iostream>
 
 using namespace agi;
@@ -166,35 +166,25 @@ std::vector<Instruction> LanguageParser::expandMacro(Macro& m, const dict& args)
 			for (const auto &p: instr.deps) {
 				current._exitNodes.erase(p);
 			}
+			std::vector<int> gdeps;
+			if (instr.isEntry()) {
+				gdeps = current.deps;
+			} else {
+				for (int k: instr.deps) {
+					const auto &v = current._map.at(k);
+					gdeps.insert(gdeps.end(), v.begin(), v.end());
+				}
+			}
 
 			if (instr.isMacro) {
 				// push new frame
 				current.instrIndex++;
-				std::vector<int> gdeps;
-				if (instr.isEntry()) {
-					gdeps = current.deps;
-				} else {
-					for (int k: instr.deps) {
-						const auto &v = current._map.at(k);
-						gdeps.insert(gdeps.end(), v.begin(), v.end());
-					}
-				}
 				auto da = stringToDict(substituteVars(instr.macroArgs, current.arguments));
 				expansionStack.push_back(ExpansionFrame(&_macros.at(instr.macroName), da, nextMacro++, instr.id, gdeps));
 				break;
 			} else {
-				std::vector<int> globalPrevious;
-				if (instr.isEntry()) {
-					globalPrevious = current.deps;
-				} else {
-					for (const auto &p: instr.deps) {
-						for (const auto &u: current._map.at(p)) {
-							globalPrevious.push_back(u);
-						}
-					}
-				}
 				current._map[instr.id].push_back(nextInstruction);
-				result.push_back({nextInstruction++, globalPrevious, substituteVars(instr.payload, current.arguments), false, ""});
+				result.push_back({nextInstruction++, gdeps, substituteVars(instr.payload, current.arguments), false, ""});
 				current.instrIndex++;
 			}
 		}
@@ -293,4 +283,26 @@ void LanguageParser::parseFile(const std::string& filename) {
 		}
 	}
 
+}
+
+std::shared_ptr<Script> LanguageParser::getScript(const std::vector<Instruction> &instructions) {
+	auto script = std::make_shared<Script>();
+	for (const auto& instr : instructions) {
+		std::cout << instr.payload << std::endl;
+		auto bo = instr.payload.find('(');
+		if (bo == std::string::npos) {
+			auto cmd = instr.payload;
+			// TODO handle command without args
+
+		} else {
+			auto args = instr.payload.substr(bo + 1, instr.payload.find(')') - bo - 1);
+			auto cmd = instr.payload.substr(0, bo);
+			auto dargs = stringToDict(args);
+			if (cmd == "print") {
+				script->addAction(instr.id, std::make_shared<agi::Print>(dargs.at("id")), instr.deps);
+			}
+		}
+
+	}
+	return  script;
 }

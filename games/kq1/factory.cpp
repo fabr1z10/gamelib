@@ -64,6 +64,12 @@ RoomFactory::RoomFactory() {
 
 	// load all global stuff here!
 	//_parser = std::make_unique<LanguageParser>();
+	YAML::Node stringFile = YAML::LoadFile("../assets/strings.yaml");
+	for (const auto& item : stringFile) {
+		auto id = item.first.as<std::string>();
+		auto value = item.second.as<std::string>();
+		_strings[id] = value;
+	}
 
 	YAML::Node config = YAML::LoadFile("../assets/objs.yaml");
 	for (const auto& item: config["objects"]) {

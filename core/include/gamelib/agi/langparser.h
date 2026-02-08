@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "gamelib/script.h"
 
 namespace agi {
 
@@ -46,6 +47,7 @@ namespace agi {
 
 		Instruction parseInstruction(const std::string& line);
 
+		std::shared_ptr<Script> getScript(const std::vector<Instruction>& instructions);
 	private:
 		dict stringToDict(const std::string& s);
 
